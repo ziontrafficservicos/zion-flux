@@ -8,10 +8,10 @@ CREATE OR REPLACE FUNCTION public.sieg_fin_registrar_disparo(
   p_telefone TEXT,
   p_nome_empresa TEXT,
   p_valor_em_aberto TEXT,
+  p_empresa_id UUID,
   p_cnpj TEXT DEFAULT NULL,
   p_nome TEXT DEFAULT NULL,
-  p_data_vencimento TEXT DEFAULT NULL,
-  p_empresa_id UUID DEFAULT '0935278d-410d-435c-bc79-adcd8349064b'::UUID
+  p_data_vencimento TEXT DEFAULT NULL
 )
 RETURNS JSON
 LANGUAGE plpgsql
@@ -121,4 +121,4 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION public.sieg_fin_registrar_disparo TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.sieg_fin_registrar_disparo TO authenticated, service_role;

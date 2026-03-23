@@ -952,7 +952,16 @@ RETURNS TABLE (
 LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
+DECLARE
+  v_caller_tenant_id UUID;
 BEGIN
+  -- Tenant isolation: resolver o tenant do caller
+  SELECT tu.tenant_id INTO v_caller_tenant_id
+  FROM public.sieg_fin_tenant_users tu
+  WHERE tu.user_id = auth.uid()
+    AND tu.active = true
+  LIMIT 1;
+
   RETURN QUERY
   SELECT
     al.id, al.tenant_id, al.user_id, al.user_email,
@@ -961,7 +970,8 @@ BEGIN
     al.descricao, al.criado_em
   FROM public.sieg_fin_audit_log al
   WHERE
-    (p_tenant_id IS NULL OR al.tenant_id = p_tenant_id)
+    al.tenant_id = v_caller_tenant_id
+    AND (p_tenant_id IS NULL OR al.tenant_id = p_tenant_id)
     AND (p_tabela IS NULL OR al.tabela = p_tabela)
     AND (p_acao IS NULL OR al.acao = p_acao)
     AND (p_user_id IS NULL OR al.user_id = p_user_id)
@@ -1106,6 +1116,16 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 BEGIN
+  -- Verificar se o caller é owner ou admin
+  IF NOT EXISTS (
+    SELECT 1 FROM sieg_fin_tenant_users
+    WHERE user_id = auth.uid()
+    AND role IN ('owner', 'admin')
+    AND active = true
+  ) THEN
+    RAISE EXCEPTION 'Permissão negada: apenas owner ou admin podem deletar usuários';
+  END IF;
+
   DELETE FROM public.sieg_fin_tenant_users WHERE user_id = usuario_id;
   DELETE FROM public.sieg_fin_membros_workspace WHERE user_id = usuario_id;
   DELETE FROM public.sieg_fin_pending_invites WHERE invited_by = usuario_id;
@@ -1178,6 +1198,11 @@ DECLARE
   v_csat_data JSON;
   v_result JSON;
 BEGIN
+  -- Whitelist: só permite tabelas conhecidas (previne SQL injection via format %I)
+  IF p_table_name NOT IN ('sieg_fin_conversas_leads', 'sieg_fin_conversas_asf', 'sieg_fin_conversas_sieg_financeiro', 'sieg_fin_atualizacao_geral') THEN
+    RAISE EXCEPTION 'Tabela não permitida: %', p_table_name;
+  END IF;
+
   EXECUTE format(
     'SELECT COUNT(*) FROM %I WHERE empresa_id = $1 AND criado_em >= $2 AND criado_em <= $3',
     p_table_name
@@ -1232,6 +1257,11 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 BEGIN
+  -- Whitelist: só permite tabelas conhecidas (previne SQL injection via format %I)
+  IF p_table_name NOT IN ('sieg_fin_conversas_leads', 'sieg_fin_conversas_asf', 'sieg_fin_conversas_sieg_financeiro', 'sieg_fin_atualizacao_geral') THEN
+    RAISE EXCEPTION 'Tabela não permitida: %', p_table_name;
+  END IF;
+
   EXECUTE format(
     'UPDATE %I SET tag = $1, atualizado_em = now() WHERE id = $2::uuid',
     p_table_name
@@ -1351,5 +1381,161 @@ CREATE POLICY "sieg_fin_pending_invites_select" ON public.sieg_fin_pending_invit
       WHERE user_id = auth.uid() AND active = true
     )
   );
+
+-- ============================================================
+-- ENABLE RLS em tabelas que estavam sem (segurança)
+-- ============================================================
+ALTER TABLE IF EXISTS public.sieg_fin_historico_tags_financeiros ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.sieg_fin_historico_valores_financeiros ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.sieg_fin_atualizacao_geral ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.sieg_fin_membros_workspace ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.sieg_fin_configuracoes_banco ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.sieg_fin_mapeamentos_tags_tenant ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.sieg_fin_custos_anuncios_tenant ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.sieg_fin_contas_meta_ads ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.sieg_fin_user_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.sieg_fin_campanhas ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.sieg_fin_eventos_lead ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.sieg_fin_auditoria_sistema ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.sieg_fin_consentimento_lgpd ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.sieg_fin_solicitacoes_lgpd ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.sieg_fin_leads_asf ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.sieg_fin_leads_asf_ofc ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.sieg_fin_leads_dr_premium ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.sieg_fin_leads_dr_premium_tags ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.sieg_fin_analise_ia ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.sieg_fin_analise_fluxos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.sieg_fin_n8n_chat_histories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.sieg_fin_confirmacao_inscricao ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.sieg_fin_superlive ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.sieg_fin_historico_tags_lead ENABLE ROW LEVEL SECURITY;
+
+-- ============================================================
+-- RLS POLICIES para tabelas com empresa_id (isolamento por tenant)
+-- ============================================================
+CREATE POLICY "sieg_fin_historico_tags_financeiros_select" ON public.sieg_fin_historico_tags_financeiros
+  FOR SELECT USING (
+    empresa_id IN (
+      SELECT tenant_id FROM public.sieg_fin_tenant_users
+      WHERE user_id = auth.uid() AND active = true
+    )
+  );
+
+CREATE POLICY "sieg_fin_historico_valores_financeiros_select" ON public.sieg_fin_historico_valores_financeiros
+  FOR SELECT USING (
+    empresa_id IN (
+      SELECT tenant_id FROM public.sieg_fin_tenant_users
+      WHERE user_id = auth.uid() AND active = true
+    )
+  );
+
+CREATE POLICY "sieg_fin_atualizacao_geral_select" ON public.sieg_fin_atualizacao_geral
+  FOR SELECT USING (
+    empresa_id::UUID IN (
+      SELECT tenant_id FROM public.sieg_fin_tenant_users
+      WHERE user_id = auth.uid() AND active = true
+    )
+  );
+
+CREATE POLICY "sieg_fin_campanhas_select" ON public.sieg_fin_campanhas
+  FOR SELECT USING (
+    empresa_id IN (
+      SELECT tenant_id FROM public.sieg_fin_tenant_users
+      WHERE user_id = auth.uid() AND active = true
+    )
+  );
+
+CREATE POLICY "sieg_fin_eventos_lead_select" ON public.sieg_fin_eventos_lead
+  FOR SELECT USING (
+    empresa_id IN (
+      SELECT tenant_id FROM public.sieg_fin_tenant_users
+      WHERE user_id = auth.uid() AND active = true
+    )
+  );
+
+CREATE POLICY "sieg_fin_auditoria_sistema_select" ON public.sieg_fin_auditoria_sistema
+  FOR SELECT USING (
+    empresa_id IN (
+      SELECT tenant_id FROM public.sieg_fin_tenant_users
+      WHERE user_id = auth.uid() AND active = true
+    )
+  );
+
+CREATE POLICY "sieg_fin_historico_tags_lead_select" ON public.sieg_fin_historico_tags_lead
+  FOR SELECT USING (
+    empresa_id IN (
+      SELECT tenant_id FROM public.sieg_fin_tenant_users
+      WHERE user_id = auth.uid() AND active = true
+    )
+  );
+
+-- Tabelas com tenant_id (em vez de empresa_id)
+CREATE POLICY "sieg_fin_configuracoes_banco_select" ON public.sieg_fin_configuracoes_banco
+  FOR SELECT USING (
+    tenant_id IN (
+      SELECT tenant_id FROM public.sieg_fin_tenant_users
+      WHERE user_id = auth.uid() AND active = true
+    )
+  );
+
+CREATE POLICY "sieg_fin_mapeamentos_tags_tenant_select" ON public.sieg_fin_mapeamentos_tags_tenant
+  FOR SELECT USING (
+    tenant_id IN (
+      SELECT tenant_id FROM public.sieg_fin_tenant_users
+      WHERE user_id = auth.uid() AND active = true
+    )
+  );
+
+CREATE POLICY "sieg_fin_custos_anuncios_tenant_select" ON public.sieg_fin_custos_anuncios_tenant
+  FOR SELECT USING (
+    tenant_id IN (
+      SELECT tenant_id FROM public.sieg_fin_tenant_users
+      WHERE user_id = auth.uid() AND active = true
+    )
+  );
+
+-- Tabelas com workspace_id (em vez de empresa_id)
+CREATE POLICY "sieg_fin_contas_meta_ads_select" ON public.sieg_fin_contas_meta_ads
+  FOR SELECT USING (
+    workspace_id IN (
+      SELECT tenant_id FROM public.sieg_fin_tenant_users
+      WHERE user_id = auth.uid() AND active = true
+    )
+  );
+
+CREATE POLICY "sieg_fin_analise_ia_select" ON public.sieg_fin_analise_ia
+  FOR SELECT USING (
+    workspace_id IN (
+      SELECT tenant_id FROM public.sieg_fin_tenant_users
+      WHERE user_id = auth.uid() AND active = true
+    )
+  );
+
+CREATE POLICY "sieg_fin_analise_fluxos_select" ON public.sieg_fin_analise_fluxos
+  FOR SELECT USING (
+    workspace_id IN (
+      SELECT tenant_id FROM public.sieg_fin_tenant_users
+      WHERE user_id = auth.uid() AND active = true
+    )
+  );
+
+-- Tabelas com user_id (isolamento por usuario)
+CREATE POLICY "sieg_fin_user_settings_select" ON public.sieg_fin_user_settings
+  FOR SELECT USING (user_id = auth.uid());
+
+CREATE POLICY "sieg_fin_membros_workspace_select" ON public.sieg_fin_membros_workspace
+  FOR SELECT USING (user_id = auth.uid());
+
+CREATE POLICY "sieg_fin_consentimento_lgpd_select" ON public.sieg_fin_consentimento_lgpd
+  FOR SELECT USING (usuario_id = auth.uid());
+
+CREATE POLICY "sieg_fin_solicitacoes_lgpd_select" ON public.sieg_fin_solicitacoes_lgpd
+  FOR SELECT USING (usuario_id = auth.uid());
+
+-- Tabelas sem coluna de tenant/empresa/user: RLS habilitado = default-deny (mais seguro)
+-- sieg_fin_leads_asf, sieg_fin_leads_asf_ofc, sieg_fin_leads_dr_premium,
+-- sieg_fin_leads_dr_premium_tags, sieg_fin_n8n_chat_histories,
+-- sieg_fin_confirmacao_inscricao, sieg_fin_superlive
+-- Acesso apenas via SECURITY DEFINER functions ou service_role
 
 COMMIT;

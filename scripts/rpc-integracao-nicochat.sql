@@ -42,10 +42,10 @@ CREATE OR REPLACE FUNCTION public.sieg_fin_registrar_disparo(
   p_telefone TEXT,
   p_nome_empresa TEXT,
   p_valor_em_aberto NUMERIC,
+  p_empresa_id UUID,
   p_cnpj TEXT DEFAULT NULL,
   p_nome TEXT DEFAULT NULL,
-  p_data_vencimento DATE DEFAULT NULL,
-  p_empresa_id UUID DEFAULT '0935278d-410d-435c-bc79-adcd8349064b'::UUID
+  p_data_vencimento DATE DEFAULT NULL
 )
 RETURNS JSON
 LANGUAGE plpgsql
@@ -180,6 +180,7 @@ $$;
 -- ============================================================
 CREATE OR REPLACE FUNCTION public.sieg_fin_atualizar_status(
   p_telefone TEXT,
+  p_empresa_id UUID,
   p_nova_tag TEXT DEFAULT NULL,
   p_valor_recuperado NUMERIC DEFAULT NULL,
   p_tipo_recuperacao TEXT DEFAULT NULL,
@@ -188,8 +189,7 @@ CREATE OR REPLACE FUNCTION public.sieg_fin_atualizar_status(
   p_opiniao_csat TEXT DEFAULT NULL,
   p_historico_conversa TEXT DEFAULT NULL,
   p_data_pagamento DATE DEFAULT NULL,
-  p_observacoes TEXT DEFAULT NULL,
-  p_empresa_id UUID DEFAULT '0935278d-410d-435c-bc79-adcd8349064b'::UUID
+  p_observacoes TEXT DEFAULT NULL
 )
 RETURNS JSON
 LANGUAGE plpgsql
@@ -229,12 +229,12 @@ BEGIN
   SET
     tag = COALESCE(p_nova_tag, tag),
     valor_recuperado_ia = CASE
-      WHEN p_tipo_recuperacao = 'ia' AND p_valor_recuperado IS NOT NULL
+      WHEN LOWER(p_tipo_recuperacao) = 'ia' AND p_valor_recuperado IS NOT NULL
         THEN COALESCE(valor_recuperado_ia, 0) + p_valor_recuperado
       ELSE valor_recuperado_ia
     END,
     valor_recuperado_humano = CASE
-      WHEN p_tipo_recuperacao = 'humano' AND p_valor_recuperado IS NOT NULL
+      WHEN LOWER(p_tipo_recuperacao) = 'humano' AND p_valor_recuperado IS NOT NULL
         THEN COALESCE(valor_recuperado_humano, 0) + p_valor_recuperado
       ELSE valor_recuperado_humano
     END,
@@ -270,7 +270,7 @@ BEGIN
       v_registro.cnpj,
       v_tag_anterior,
       p_nova_tag,
-      CASE WHEN p_tipo_recuperacao = 'ia' THEN p_valor_recuperado ELSE NULL END,
+      CASE WHEN LOWER(p_tipo_recuperacao) = 'ia' THEN p_valor_recuperado ELSE NULL END,
       v_agora
     );
   END IF;
@@ -293,18 +293,18 @@ BEGIN
       v_telefone_normalizado,
       v_registro.cnpj,
       CASE
-        WHEN p_tipo_recuperacao = 'ia' THEN 'recuperado_ia'
-        WHEN p_tipo_recuperacao = 'humano' THEN 'recuperado_humano'
+        WHEN LOWER(p_tipo_recuperacao) = 'ia' THEN 'recuperado_ia'
+        WHEN LOWER(p_tipo_recuperacao) = 'humano' THEN 'recuperado_humano'
         ELSE 'recuperado'
       END,
       CASE
-        WHEN p_tipo_recuperacao = 'ia' THEN COALESCE(v_registro.valor_recuperado_ia, 0)
-        WHEN p_tipo_recuperacao = 'humano' THEN COALESCE(v_registro.valor_recuperado_humano, 0)
+        WHEN LOWER(p_tipo_recuperacao) = 'ia' THEN COALESCE(v_registro.valor_recuperado_ia, 0)
+        WHEN LOWER(p_tipo_recuperacao) = 'humano' THEN COALESCE(v_registro.valor_recuperado_humano, 0)
         ELSE 0
       END,
       CASE
-        WHEN p_tipo_recuperacao = 'ia' THEN COALESCE(v_registro.valor_recuperado_ia, 0) + p_valor_recuperado
-        WHEN p_tipo_recuperacao = 'humano' THEN COALESCE(v_registro.valor_recuperado_humano, 0) + p_valor_recuperado
+        WHEN LOWER(p_tipo_recuperacao) = 'ia' THEN COALESCE(v_registro.valor_recuperado_ia, 0) + p_valor_recuperado
+        WHEN LOWER(p_tipo_recuperacao) = 'humano' THEN COALESCE(v_registro.valor_recuperado_humano, 0) + p_valor_recuperado
         ELSE p_valor_recuperado
       END,
       p_valor_recuperado,
@@ -333,8 +333,8 @@ END;
 $$;
 
 -- ============================================================
--- PERMISSOES: NicoChat usa anon key, precisa de GRANT
+-- PERMISSOES: NicoChat usa service_role key, dashboard usa authenticated
 -- ============================================================
-GRANT EXECUTE ON FUNCTION public.sieg_fin_normalizar_telefone TO anon, authenticated, service_role;
-GRANT EXECUTE ON FUNCTION public.sieg_fin_registrar_disparo TO anon, authenticated, service_role;
-GRANT EXECUTE ON FUNCTION public.sieg_fin_atualizar_status TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.sieg_fin_normalizar_telefone TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.sieg_fin_registrar_disparo TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.sieg_fin_atualizar_status TO authenticated, service_role;

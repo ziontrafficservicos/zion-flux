@@ -256,8 +256,6 @@ export function useValoresFinanceiros(startDate?: Date, endDate?: Date) {
         }
 
         console.log(`💰 [useValoresFinanceiros] Recuperados: IA=${valorRecuperadoIA}, Humano=${valorRecuperadoHumano}`);
-        
-        console.log(`💰 [useValoresFinanceiros] Recuperados: IA=${valorRecuperadoIA}, Humano=${valorRecuperadoHumano}`);
 
         const valorRecuperadoTotal = valorRecuperadoIA + valorRecuperadoHumano;
         const metaMensal = 50000.00;
