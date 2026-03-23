@@ -26,7 +26,7 @@ export function useUpdateLastAccess() {
 
         // Atualizar último acesso
         await (supabase as any)
-          .from('tenant_users')
+          .from('sieg_fin_tenant_users')
           .update({ ultimo_acesso: new Date().toISOString() })
           .eq('tenant_id', tenant.id)
           .eq('user_id', user.id);

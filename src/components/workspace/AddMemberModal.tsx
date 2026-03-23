@@ -108,7 +108,7 @@ export function AddMemberModal({ open, onOpenChange, onAddMember, currentTenantI
 
       // Inserir convite diretamente no banco
       const { data: invite, error: insertError } = await supabase
-        .from('pending_invites')
+        .from('sieg_fin_pending_invites')
         .insert({
           workspace_id: targetTenantId,
           email: validation.email.toLowerCase().trim(),

@@ -67,7 +67,7 @@ export const JornadaTab = ({ leadId, telefone }: JornadaTabProps) => {
       setIsLoading(true);
       try {
         const { data, error } = await (centralSupabase as any)
-          .from('historico_tags_lead')
+          .from('sieg_fin_historico_tags_lead')
           .select('*')
           .eq('lead_id', leadId)
           .order('criado_em', { ascending: true });

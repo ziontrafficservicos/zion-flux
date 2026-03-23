@@ -26,7 +26,7 @@ export function useTagMappings(tenantId: string | null) {
         
         // Usar query direta sem tipagem (tabela não está nos tipos gerados)
         const { data, error: fetchError } = await (supabase as any)
-          .from('mapeamentos_tags_tenant')
+          .from('sieg_fin_mapeamentos_tags_tenant')
           .select('tag_externa, estagio_interno, rotulo_exibicao, descricao, ordem_exibicao')
           .eq('tenant_id', tenantId)
           .eq('ativo', true)

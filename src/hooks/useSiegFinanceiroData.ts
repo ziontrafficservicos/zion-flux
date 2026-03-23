@@ -206,7 +206,7 @@ export function useSiegFinanceiroData(startDate?: Date, endDate?: Date) {
 
       // Construir query base
       let query = (centralSupabase as any)
-        .from('financeiro_sieg')
+        .from('sieg_fin_financeiro')
         .select('*')
         .order('atualizado_em', { ascending: false });
 

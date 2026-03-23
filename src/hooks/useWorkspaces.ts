@@ -53,7 +53,7 @@ export function useWorkspaces() {
 
       // Obter workspaces via RPC
       const { data: workspaceIds, error: tenantWsError } = await centralSupabase
-        .rpc('get_user_workspaces', { _user_id: session.user.id });
+        .rpc('sieg_fin_get_user_workspaces', { _user_id: session.user.id });
 
       if (tenantWsError) throw tenantWsError;
 
@@ -64,7 +64,7 @@ export function useWorkspaces() {
 
       // Buscar detalhes dos workspaces usando os IDs
       const workspaceIdsList = workspaceIds.map(w => w.workspace_id);
-      const { data: tenantWorkspaces, error: detailsError } = await (centralSupabase.from as any)('workspaces')
+      const { data: tenantWorkspaces, error: detailsError } = await (centralSupabase.from as any)('sieg_fin_workspaces')
         .select(`
           id,
           name,
@@ -75,7 +75,7 @@ export function useWorkspaces() {
           primary_color,
           status,
           tenant_id,
-          database_config:database_configs(database_key)
+          database_key
         `)
         .in('id', workspaceIdsList)
         .eq('active', true)
@@ -105,7 +105,7 @@ export function useWorkspaces() {
         id: workspace.id,
         name: workspace.name,
         slug: workspace.slug,
-        database: workspace.database_config?.database_key || tenant.database_key,
+        database: workspace.database_key || tenant.database_key,
         created_at: workspace.created_at,
         segment: workspace.segment || undefined,
         logo_url: workspace.logo_url || undefined,

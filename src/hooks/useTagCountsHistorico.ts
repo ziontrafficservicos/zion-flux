@@ -53,7 +53,7 @@ export function useTagCountsHistorico(startDate?: Date, endDate?: Date) {
 
         // PASSO 1: Buscar telefones DISTINTOS que receberam DISPARO no período
         let disparosQuery = (centralSupabase as any)
-          .from('disparos')
+          .from('sieg_fin_disparos')
           .select('telefone')
           .eq('empresa_id', tenant.id)
           .gte('criado_em', startISO);
@@ -95,11 +95,18 @@ export function useTagCountsHistorico(startDate?: Date, endDate?: Date) {
         for (let i = 0; i < telefonesUnicos.length; i += batchSize) {
           const batch = telefonesUnicos.slice(i, i + batchSize);
           
-          const { data: financeiroData, error: financeiroError } = await (centralSupabase as any)
-            .from('financeiro_sieg')
+          let finQuery = (centralSupabase as any)
+            .from('sieg_fin_financeiro')
             .select('id, telefone, tag, atendente, valor_recuperado_ia')
             .eq('empresa_id', tenant.id)
-            .in('telefone', batch);
+            .in('telefone', batch)
+            .gte('criado_em', startISO);
+
+          if (endISO) {
+            finQuery = finQuery.lt('criado_em', endISO);
+          }
+
+          const { data: financeiroData, error: financeiroError } = await finQuery;
 
           if (financeiroError) {
             console.error('Erro ao buscar financeiro_sieg:', financeiroError);

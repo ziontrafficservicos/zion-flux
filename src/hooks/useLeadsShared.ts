@@ -293,8 +293,8 @@ export async function fetchTenantLeads({
 
   // Determinar tabelas corretas baseadas no tenant
   const workspaceSlug = tenantSlug || 'asf'; // Default para ASF
-  const leadsTableName = 'leads';
-  const conversasTableName = 'conversas_leads';
+  const leadsTableName = 'sieg_fin_leads';
+  const conversasTableName = 'sieg_fin_conversas_leads';
   
   console.log('[fetchTenantLeads] Usando tabelas:', { leads: leadsTableName, conversas: conversasTableName, workspace: workspaceSlug });
 
@@ -427,7 +427,7 @@ async function fetchSiegFinanceiroLeads(
     const to = from + PAGE_SIZE - 1;
 
     const { data, error } = await supabaseClient
-      .from('financeiro_sieg')
+      .from('sieg_fin_financeiro')
       .select('id, empresa_id, nome, nome_empresa, cnpj, telefone, valor_em_aberto, valor_recuperado_ia, valor_recuperado_humano, em_negociacao, situacao, tag, data_vencimento, data_pagamento, observacoes, criado_em, atualizado_em, atendente, nota_csat, historico_conversa')
       .eq('empresa_id', tenantId)
       .gte('criado_em', startISO)

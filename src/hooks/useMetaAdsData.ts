@@ -66,7 +66,7 @@ export function useMetaAdsData(
       // Buscar contas Meta Ads vinculadas ao workspace
       console.log('🔍 Buscando contas Meta Ads...');
       const { data: metaAccounts, error: accountsError } = await (centralSupabase as any)
-        .from('meta_ads_accounts')
+        .from('sieg_fin_meta_ads_accounts')
         .select('account_id, account_name')
         .eq('workspace_id', tenant.id)
         .eq('is_active', true);
@@ -354,7 +354,7 @@ export function useMetaAdsData(
       });
 
       const { data: custoData, error: custoError } = await (centralSupabase as any)
-        .from('custos_anuncios_tenant')
+        .from('sieg_fin_custos_anuncios_tenant')
         .select('*')
         .eq('tenant_id', tenant.id)
         .gte('dia', fromDateStr)
@@ -446,7 +446,7 @@ export function useMetaAdsData(
         let kpiData: any[] = [];
         try {
           const { data: data, error: kpiError } = await (centralSupabase as any)
-            .from('kpi_overview_daily')
+            .from('sieg_fin_kpi_overview_daily')
             .select('day, investimento')
             .eq('workspace_id', tenant.id)
             .gte('day', fromDateStr)
@@ -591,7 +591,7 @@ export function useMetaAdsData(
     // Short-circuit by workspace database field (authoritative source)
     try {
       const { data: config } = await (centralSupabase as any)
-        .from('database_configs')
+        .from('sieg_fin_database_configs')
         .select('database_key')
         .eq('tenant_id', tenant.id)
         .eq('active', true)

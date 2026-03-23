@@ -40,7 +40,7 @@ export function useSupabaseDiagnostics() {
 
         // 1️⃣ Teste básico de conexão - verifica se consegue acessar workspaces via RPC
         const { data: workspacesData, error: workspacesError } = await supabase
-          .rpc('get_user_workspaces', { _user_id: session.user.id })
+          .rpc('sieg_fin_get_user_workspaces', { _user_id: session.user.id })
           .limit(1);
 
         if (workspacesError) {
@@ -59,7 +59,7 @@ export function useSupabaseDiagnostics() {
         // Temporariamente desabilitado até corrigir permissões da tabela kpi_overview_daily
         /*
         const { error: kpiError } = await supabase
-          .from("kpi_overview_daily")
+          .from("sieg_fin_kpi_overview_daily")
           .select("workspace_id")
           .limit(1);
 
@@ -72,7 +72,7 @@ export function useSupabaseDiagnostics() {
         */
 
         const { error: leadsError } = await supabase
-          .from("leads")
+          .from("sieg_fin_leads")
           .select("id")
           .limit(1);
 
@@ -97,7 +97,7 @@ export function useSupabaseDiagnostics() {
           .toISOString()
           .split("T")[0];
 
-        const { error: rpcError } = await supabase.rpc("kpi_totais_periodo", {
+        const { error: rpcError } = await supabase.rpc("sieg_fin_kpi_totais_periodo", {
           p_workspace_id: "3f14bb25-0eda-4c58-8486-16b96dca6f9e",
           p_from: startDate,
           p_to: endDate,

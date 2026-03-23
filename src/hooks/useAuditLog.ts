@@ -49,7 +49,7 @@ export function useAuditLog(filters?: AuditLogFilters) {
       console.log('📋 [AuditLog] Buscando logs para tenant:', currentTenant.id);
 
       // Buscar logs via RPC
-      const { data, error: rpcError } = await (supabase as any).rpc('get_audit_logs', {
+      const { data, error: rpcError } = await (supabase as any).rpc('sieg_fin_get_audit_logs', {
         p_tenant_id: currentTenant.id,
         p_tabela: filters?.tabela || null,
         p_acao: filters?.acao || null,
@@ -68,7 +68,7 @@ export function useAuditLog(filters?: AuditLogFilters) {
           console.log('⚠️ [AuditLog] Função RPC não existe, tentando busca direta...');
           
           let query = (supabase as any)
-            .from('audit_log')
+            .from('sieg_fin_audit_log')
             .select('*', { count: 'exact' })
             .eq('tenant_id', currentTenant.id)
             .order('criado_em', { ascending: false })
@@ -113,7 +113,7 @@ export function useAuditLog(filters?: AuditLogFilters) {
       setLogs(data || []);
 
       // Buscar contagem total
-      const { data: countData, error: countError } = await (supabase as any).rpc('count_audit_logs', {
+      const { data: countData, error: countError } = await (supabase as any).rpc('sieg_fin_count_audit_logs', {
         p_tenant_id: currentTenant.id,
         p_tabela: filters?.tabela || null,
         p_acao: filters?.acao || null,
@@ -179,17 +179,17 @@ export function useAuditLog(filters?: AuditLogFilters) {
  */
 export function traduzirTabela(tabela: string): string {
   const traducoes: Record<string, string> = {
-    leads: 'Leads',
-    conversas_leads: 'Conversas',
-    financeiro_sieg: 'Financeiro SIEG',
-    campanhas: 'Campanhas',
-    tenant_users: 'Usuários',
-    mapeamentos_tags_tenant: 'Mapeamento de Tags',
-    custos_anuncios_tenant: 'Custos de Anúncios',
-    empresas: 'Empresas',
-    disparos: 'Disparos',
-    eventos_lead: 'Eventos de Lead',
-    pending_invites: 'Convites Pendentes',
+    sieg_fin_leads: 'Leads',
+    sieg_fin_conversas_leads: 'Conversas',
+    sieg_fin_financeiro: 'Financeiro SIEG',
+    sieg_fin_campanhas: 'Campanhas',
+    sieg_fin_tenant_users: 'Usuários',
+    sieg_fin_mapeamentos_tags_tenant: 'Mapeamento de Tags',
+    sieg_fin_custos_anuncios_tenant: 'Custos de Anúncios',
+    sieg_fin_empresas: 'Empresas',
+    sieg_fin_disparos: 'Disparos',
+    sieg_fin_eventos_lead: 'Eventos de Lead',
+    sieg_fin_pending_invites: 'Convites Pendentes',
   };
   return traducoes[tabela] || tabela;
 }

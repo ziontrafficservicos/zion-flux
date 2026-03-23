@@ -130,7 +130,7 @@ export const TenantProvider: React.FC<TenantProviderProps> = ({ children }) => {
       if (isMasterUser) {
         // Master user: carregar TODOS os tenants
         console.log('🔓 MASTER USER - Carregando todos os tenants');
-        const { data: allTenants, error: tenantsError } = await (centralSupabase.from as any)('tenants_new')
+        const { data: allTenants, error: tenantsError } = await (centralSupabase.from as any)('sieg_fin_tenants_new')
           .select('*')
           .eq('active', true);
 
@@ -152,7 +152,7 @@ export const TenantProvider: React.FC<TenantProviderProps> = ({ children }) => {
         }));
       } else {
         // Usuário normal: carregar apenas tenants com membership
-        const { data: rawMemberships, error: membershipError } = await (centralSupabase.from as any)('tenant_users')
+        const { data: rawMemberships, error: membershipError } = await (centralSupabase.from as any)('sieg_fin_tenant_users')
           .select(`
             id,
             tenant_id,
@@ -160,7 +160,7 @@ export const TenantProvider: React.FC<TenantProviderProps> = ({ children }) => {
             role,
             active,
             custom_permissions,
-            tenant:tenants_new (
+            tenant:sieg_fin_tenants_new (
               id,
               name,
               slug,

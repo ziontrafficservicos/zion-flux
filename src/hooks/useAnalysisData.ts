@@ -29,7 +29,7 @@ export function useAnalysisData(conversationId: number, workspaceId: string, mes
       logger.info('Buscando análise existente');
 
       const { data, error: fetchError } = await supabase
-        .from('analise_fluxos')
+        .from('sieg_fin_analise_fluxos')
         .select('*')
         .eq('conversa_id', conversationId)
         .eq('workspace_id', workspaceId)
@@ -54,7 +54,7 @@ export function useAnalysisData(conversationId: number, workspaceId: string, mes
 
       // Buscar a análise recém-criada
       const { data: newData, error: newFetchError } = await supabase
-        .from('analise_fluxos')
+        .from('sieg_fin_analise_fluxos')
         .select('*')
         .eq('conversa_id', conversationId)
         .eq('workspace_id', workspaceId)

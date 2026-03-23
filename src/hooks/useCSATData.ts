@@ -211,7 +211,7 @@ export function useCSATData(_workspaceId: string, startDate?: Date, endDate?: Da
           const to = from + PAGE_SIZE - 1;
           
           let query = (centralSupabase as any)
-            .from('financeiro_sieg')
+            .from('sieg_fin_financeiro')
             .select('id, nome, nome_empresa, telefone, atendente, nota_csat, opiniao_csat, historico_conversa, tag, criado_em')
             .eq('empresa_id', tenant.id)
             .gte('criado_em', filterStartDate)

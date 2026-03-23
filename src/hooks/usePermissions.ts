@@ -70,7 +70,7 @@ export function usePermissions() {
 
       // Usar query SQL direta para evitar problemas de TypeScript
       const { data: customPermissions, error } = await supabase
-        .rpc('get_user_permissions', {
+        .rpc('sieg_fin_get_user_permissions', {
           p_workspace_id: tenantId,
           p_user_id: userData.user.id
         });

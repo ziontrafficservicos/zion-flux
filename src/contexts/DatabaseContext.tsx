@@ -52,11 +52,11 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
   const fetchDatabaseConfigs = async () => {
     try {
       const [{ data: tenantData, error: tenantError }, { data, error }] = await Promise.all([
-        (defaultSupabase.from as any)('tenants_new')
+        (defaultSupabase.from as any)('sieg_fin_tenants_new')
           .select('id, slug, name')
           .order('created_at', { ascending: true }),
         defaultSupabase
-          .from('database_configs')
+          .from('sieg_fin_database_configs')
           .select('*')
           .eq('active', true)
           .order('created_at', { ascending: true })

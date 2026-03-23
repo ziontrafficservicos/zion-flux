@@ -59,7 +59,7 @@ export function useAnalyticsData(workspaceId: string) {
       let dailyData: any[] = [];
       try {
         const { data: data, error: dailyError } = await supabase
-          .from('kpi_overview_daily')
+          .from('sieg_fin_kpi_overview_daily')
           .select('day, leads_recebidos, leads_qualificados, leads_followup, leads_descartados, investimento, cpl')
           .eq('workspace_id', workspaceId)
           .gte('day', startDate.toISOString())

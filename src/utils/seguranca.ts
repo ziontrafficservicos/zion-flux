@@ -244,7 +244,7 @@ export async function registrarAuditoria(dados: DadosAuditoria): Promise<void> {
     
     if (!user) return;
     
-    await (supabase as any).from('auditoria_sistema').insert({
+    await (supabase as any).from('sieg_fin_auditoria_sistema').insert({
       usuario_id: user.id,
       usuario_email: user.email,
       acao: dados.acao,

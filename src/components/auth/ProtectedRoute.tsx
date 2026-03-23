@@ -50,7 +50,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
       if (session?.user?.id) {
         try {
           const { data: tenantData } = await supabase
-            .from('tenant_users')
+            .from('sieg_fin_tenant_users')
             .select('bloqueado')
             .eq('user_id', session.user.id)
             .eq('bloqueado', true)

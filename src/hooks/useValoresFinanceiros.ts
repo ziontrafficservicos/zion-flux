@@ -63,7 +63,7 @@ export function useValoresFinanceiros(startDate?: Date, endDate?: Date) {
           // Buscar todos os registros da tabela financeiro_sieg para este tenant
           // Incluindo valor_recuperado_ia e valor_recuperado_humano
           const { data: financeiroData, error: financeiroError } = await (centralSupabase as any)
-            .from('financeiro_sieg')
+            .from('sieg_fin_financeiro')
             .select('valor_em_aberto, valor_recuperado_ia, valor_recuperado_humano, cnpj, telefone')
             .eq('empresa_id', tenant.id);
           
@@ -152,7 +152,7 @@ export function useValoresFinanceiros(startDate?: Date, endDate?: Date) {
 
         // ========== TOTAL COBRADO (disparos enviados no período) ==========
         let disparosQuery = (centralSupabase as any)
-          .from('disparos')
+          .from('sieg_fin_disparos')
           .select('telefone')
           .eq('empresa_id', tenant.id)
           .eq('status', 'enviado')
@@ -183,11 +183,18 @@ export function useValoresFinanceiros(startDate?: Date, endDate?: Date) {
           for (let i = 0; i < telefonesEnviados.length; i += PAGE_SIZE) {
             const batch = telefonesEnviados.slice(i, i + PAGE_SIZE);
             
-            const { data: financeiroData, error: financeiroError } = await (centralSupabase as any)
-              .from('financeiro_sieg')
+            let finValorQuery = (centralSupabase as any)
+              .from('sieg_fin_financeiro')
               .select('valor_em_aberto, cnpj, telefone, data_vencimento')
               .eq('empresa_id', tenant.id)
-              .in('telefone', batch);
+              .in('telefone', batch)
+              .gte('criado_em', startISO);
+
+            if (endISO) {
+              finValorQuery = finValorQuery.lt('criado_em', endISO);
+            }
+
+            const { data: financeiroData, error: financeiroError } = await finValorQuery;
             
             if (!financeiroError && financeiroData) {
               allValores.push(...financeiroData);
@@ -216,100 +223,39 @@ export function useValoresFinanceiros(startDate?: Date, endDate?: Date) {
         }
 
         // ========== VALORES RECUPERADOS ==========
-        // Buscar da tabela historico_tags_financeiros filtrado por data_registro no período
-        // E cruzar com financeiro_sieg para pegar os valores corretos
+        // Buscar direto da tabela sieg_fin_financeiro pelos telefones que tiveram disparo
+        // Soma valor_recuperado_ia e valor_recuperado_humano independente da tag
         let valorRecuperadoIA = 0;
         let valorRecuperadoHumano = 0;
-        
-        // Buscar mudanças de tag para PAGO IA (T3) no período
-        let queryIA = (centralSupabase as any)
-          .from('historico_tags_financeiros')
-          .select('telefone, cnpj, data_registro, tag_nova')
-          .eq('empresa_id', tenant.id)
-          .gte('data_registro', startISO)
-          .ilike('tag_nova', '%T3%');
-        
-        if (endISO) {
-          queryIA = queryIA.lt('data_registro', endISO);
-        }
-        
-        const { data: pagosIA, error: errorIA } = await queryIA;
-        
-        console.log(`💰 [useValoresFinanceiros] Query IA: ${pagosIA?.length || 0} registros encontrados`);
-        
-        // Buscar mudanças de tag para TRANSFERIDO/HUMANO (T4) no período
-        let queryHumano = (centralSupabase as any)
-          .from('historico_tags_financeiros')
-          .select('telefone, cnpj, data_registro, tag_nova')
-          .eq('empresa_id', tenant.id)
-          .gte('data_registro', startISO)
-          .ilike('tag_nova', '%T4%');
-        
-        if (endISO) {
-          queryHumano = queryHumano.lt('data_registro', endISO);
-        }
-        
-        const { data: pagosHumano, error: errorHumano } = await queryHumano;
-        
-        console.log(`💰 [useValoresFinanceiros] Query Humano: ${pagosHumano?.length || 0} registros encontrados`);
-        
-        // Coletar telefones únicos de T3 e T4 para buscar valores na tabela financeiro_sieg
-        const telefonesT3 = new Set<string>();
-        const telefonesT4 = new Set<string>();
-        
-        if (!errorIA && pagosIA) {
-          pagosIA.forEach((item: any) => {
-            if (item.telefone) telefonesT3.add(item.telefone);
-          });
-        }
-        
-        if (!errorHumano && pagosHumano) {
-          pagosHumano.forEach((item: any) => {
-            if (item.telefone) telefonesT4.add(item.telefone);
-          });
-        }
-        
-        // Buscar valores reais da tabela financeiro_sieg para T3 (IA)
-        if (telefonesT3.size > 0) {
-          const telefonesArrayT3 = Array.from(telefonesT3);
+
+        if (telefonesEnviados.length > 0) {
           const PAGE_SIZE = 200;
-          
-          for (let i = 0; i < telefonesArrayT3.length; i += PAGE_SIZE) {
-            const batch = telefonesArrayT3.slice(i, i + PAGE_SIZE);
-            const { data: finData } = await (centralSupabase as any)
-              .from('financeiro_sieg')
-              .select('valor_recuperado_ia, telefone')
+
+          for (let i = 0; i < telefonesEnviados.length; i += PAGE_SIZE) {
+            const batch = telefonesEnviados.slice(i, i + PAGE_SIZE);
+            let finRecQuery = (centralSupabase as any)
+              .from('sieg_fin_financeiro')
+              .select('valor_recuperado_ia, valor_recuperado_humano, telefone')
               .eq('empresa_id', tenant.id)
-              .in('telefone', batch);
-            
+              .in('telefone', batch)
+              .gte('criado_em', startISO);
+
+            if (endISO) {
+              finRecQuery = finRecQuery.lt('criado_em', endISO);
+            }
+
+            const { data: finData } = await finRecQuery;
+
             if (finData) {
               finData.forEach((item: any) => {
                 valorRecuperadoIA += parseValorBR(item.valor_recuperado_ia);
-              });
-            }
-          }
-        }
-        
-        // Buscar valores reais da tabela financeiro_sieg para T4 (Humano)
-        if (telefonesT4.size > 0) {
-          const telefonesArrayT4 = Array.from(telefonesT4);
-          const PAGE_SIZE = 200;
-          
-          for (let i = 0; i < telefonesArrayT4.length; i += PAGE_SIZE) {
-            const batch = telefonesArrayT4.slice(i, i + PAGE_SIZE);
-            const { data: finData } = await (centralSupabase as any)
-              .from('financeiro_sieg')
-              .select('valor_recuperado_humano, telefone')
-              .eq('empresa_id', tenant.id)
-              .in('telefone', batch);
-            
-            if (finData) {
-              finData.forEach((item: any) => {
                 valorRecuperadoHumano += parseValorBR(item.valor_recuperado_humano);
               });
             }
           }
         }
+
+        console.log(`💰 [useValoresFinanceiros] Recuperados: IA=${valorRecuperadoIA}, Humano=${valorRecuperadoHumano}`);
         
         console.log(`💰 [useValoresFinanceiros] Recuperados: IA=${valorRecuperadoIA}, Humano=${valorRecuperadoHumano}`);
 
@@ -322,11 +268,18 @@ export function useValoresFinanceiros(startDate?: Date, endDate?: Date) {
           const PAGE_SIZE = 200;
           for (let i = 0; i < telefonesEnviados.length; i += PAGE_SIZE) {
             const batch = telefonesEnviados.slice(i, i + PAGE_SIZE);
-            const { data: cnpjData } = await (centralSupabase as any)
-              .from('financeiro_sieg')
+            let finCnpjQuery = (centralSupabase as any)
+              .from('sieg_fin_financeiro')
               .select('cnpj, telefone')
               .eq('empresa_id', tenant.id)
-              .in('telefone', batch);
+              .in('telefone', batch)
+              .gte('criado_em', startISO);
+
+            if (endISO) {
+              finCnpjQuery = finCnpjQuery.lt('criado_em', endISO);
+            }
+
+            const { data: cnpjData } = await finCnpjQuery;
             
             if (cnpjData) {
               cnpjData.forEach((item: any) => {

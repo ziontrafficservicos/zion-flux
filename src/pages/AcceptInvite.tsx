@@ -82,7 +82,7 @@ export default function AcceptInvite() {
       console.log('🔍 AcceptInvite: Verifying token in database...');
       
       const { data, error } = await supabase
-        .from('pending_invites')
+        .from('sieg_fin_pending_invites')
         .select('*')
         .eq('token', token)
         .is('accepted_at', null)
@@ -229,7 +229,7 @@ export default function AcceptInvite() {
 
       // Adicionar usuário ao workspace diretamente (usando any para contornar tipagem)
       const { error: memberError } = await (supabase as any)
-        .from('tenant_users')
+        .from('sieg_fin_tenant_users')
         .insert({
           tenant_id: workspaceId,
           user_id: userId,
@@ -243,7 +243,7 @@ export default function AcceptInvite() {
         if (memberError.code === '23505') {
           console.log('[AcceptInvite] Usuário já é membro, atualizando...');
           await (supabase as any)
-            .from('tenant_users')
+            .from('sieg_fin_tenant_users')
             .update({ 
               role: inviteData!.role, 
               active: true,
@@ -259,7 +259,7 @@ export default function AcceptInvite() {
 
       // Marcar convite como aceito
       await (supabase as any)
-        .from('pending_invites')
+        .from('sieg_fin_pending_invites')
         .update({ accepted_at: new Date().toISOString() })
         .eq('token', token);
 

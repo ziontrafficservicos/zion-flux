@@ -72,7 +72,7 @@ const DashboardIndex = () => {
   useEffect(() => {
     if (!currentWorkspaceId) return;
     supabase
-      .from('workspaces')
+      .from('sieg_fin_workspaces')
       .select('database')
       .eq('id', currentWorkspaceId)
       .maybeSingle()

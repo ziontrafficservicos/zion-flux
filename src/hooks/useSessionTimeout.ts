@@ -28,7 +28,7 @@ export function useSessionTimeout() {
       // Registrar logout na auditoria
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        await (supabase as any).from('auditoria_sistema').insert({
+        await (supabase as any).from('sieg_fin_auditoria_sistema').insert({
           usuario_id: user.id,
           usuario_email: user.email,
           acao: 'logout',

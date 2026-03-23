@@ -42,7 +42,7 @@ export function EditPermissionsModal({
     setError(null);
 
     try {
-      const { data, error: rpcError } = await supabase.rpc('get_user_permissions', {
+      const { data, error: rpcError } = await supabase.rpc('sieg_fin_get_user_permissions', {
         p_workspace_id: workspaceId,
         p_user_id: userId
       });
@@ -80,7 +80,7 @@ export function EditPermissionsModal({
     setError(null);
 
     try {
-      const { data, error: rpcError } = await supabase.rpc('save_user_permissions', {
+      const { data, error: rpcError } = await supabase.rpc('sieg_fin_save_user_permissions', {
         p_workspace_id: workspaceId,
         p_user_id: userId,
         p_permissions: selectedPermissions

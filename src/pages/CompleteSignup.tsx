@@ -89,7 +89,7 @@ const CompleteSignup = () => {
       if (user) {
         // Usar RPC para obter workspaces do usuário
         const { data: workspaceIds } = await supabase
-          .rpc('get_user_workspaces', { _user_id: user.id });
+          .rpc('sieg_fin_get_user_workspaces', { _user_id: user.id });
         
         const workspaceData = workspaceIds && workspaceIds.length > 0 
           ? [{ workspace_id: workspaceIds[0].workspace_id, role: 'member' }]

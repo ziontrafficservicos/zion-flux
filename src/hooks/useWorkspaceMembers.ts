@@ -34,7 +34,7 @@ export function useWorkspaceMembers() {
       
       // Buscar membros do tenant (incluindo bloqueados para exibir na lista)
       const { data: tenantUsers, error: tenantError } = await (supabase as any)
-        .from('tenant_users')
+        .from('sieg_fin_tenant_users')
         .select('user_id, role, custom_permissions, bloqueado, bloqueado_em, ultimo_acesso')
         .eq('tenant_id', tenant.id)
         .eq('active', true);
@@ -53,7 +53,7 @@ export function useWorkspaceMembers() {
       let userProfiles: any[] = [];
       try {
         const { data: profiles } = await (supabase as any)
-          .from('perfis_usuarios')
+          .from('sieg_fin_perfis_usuarios')
           .select('id, email, nome_completo')
           .in('id', userIds);
         userProfiles = profiles || [];
@@ -107,7 +107,7 @@ export function useWorkspaceMembers() {
 
     try {
       const { error } = await (supabase as any)
-        .from('tenant_users')
+        .from('sieg_fin_tenant_users')
         .update({ role: newRole })
         .eq('tenant_id', tenant.id)
         .eq('user_id', userId);
@@ -172,7 +172,7 @@ export function useWorkspaceMembers() {
       if (deleteCompletely) {
         // Deletar de tenant_users (todos os workspaces)
         const { error: tenantError } = await (supabase as any)
-          .from('tenant_users')
+          .from('sieg_fin_tenant_users')
           .delete()
           .eq('user_id', userId);
 
@@ -182,7 +182,7 @@ export function useWorkspaceMembers() {
 
         // Deletar convites pendentes
         const { error: inviteError } = await (supabase as any)
-          .from('pending_invites')
+          .from('sieg_fin_pending_invites')
           .delete()
           .eq('invited_by', userId);
 
@@ -192,13 +192,13 @@ export function useWorkspaceMembers() {
 
         // Deletar do auth.users via RPC (precisa de função no banco)
         const { error: authError } = await (supabase as any)
-          .rpc('deletar_usuario_completo', { usuario_id: userId });
+          .rpc('sieg_fin_deletar_usuario_completo', { usuario_id: userId });
 
         if (authError) {
           console.error('Erro ao deletar do auth:', authError);
           // Se falhar, tentar apenas desativar
           await (supabase as any)
-            .from('tenant_users')
+            .from('sieg_fin_tenant_users')
             .update({ active: false })
             .eq('user_id', userId);
         }
@@ -210,7 +210,7 @@ export function useWorkspaceMembers() {
       } else {
         // Apenas desativar no workspace atual
         const { error } = await (supabase as any)
-          .from('tenant_users')
+          .from('sieg_fin_tenant_users')
           .update({ active: false })
           .eq('tenant_id', tenant.id)
           .eq('user_id', userId);
@@ -254,7 +254,7 @@ export function useWorkspaceMembers() {
       }
 
       const { error } = await (supabase as any)
-        .from('tenant_users')
+        .from('sieg_fin_tenant_users')
         .update(updateData)
         .eq('tenant_id', tenant.id)
         .eq('user_id', userId);

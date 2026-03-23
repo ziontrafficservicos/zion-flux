@@ -28,7 +28,7 @@ export const DataTable = ({ workspaceId }: DataTableProps) => {
         let kpiData: any[] = [];
         try {
           const { data: data, error: kpiError } = await supabase
-            .from('kpi_overview_daily')
+            .from('sieg_fin_kpi_overview_daily')
             .select('day, leads_recebidos, leads_qualificados, investimento, cpl')
             .eq('workspace_id', workspaceId)
             .order('day', { ascending: false })
@@ -47,7 +47,7 @@ export const DataTable = ({ workspaceId }: DataTableProps) => {
 
         // Fetch sources from custo_anuncios
         const { data: sourcesData } = await supabase
-          .from('custo_anuncios')
+          .from('sieg_fin_custos_anuncios_tenant')
           .select('day, source')
           .eq('workspace_id', workspaceId)
           .in('day', (kpiData || []).map(d => d.day));

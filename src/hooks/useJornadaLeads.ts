@@ -59,7 +59,7 @@ export function useJornadaLeads(telefone?: string) {
     try {
       // Buscar histórico de tags
       let query = (centralSupabase as any)
-        .from('historico_tags_lead')
+        .from('sieg_fin_historico_tags_lead')
         .select(`
           id,
           lead_id,
@@ -91,7 +91,7 @@ export function useJornadaLeads(telefone?: string) {
       let leadsData: any[] = [];
       if (leadIds.length > 0) {
         const { data: leads } = await (centralSupabase as any)
-          .from('financeiro_sieg')
+          .from('sieg_fin_financeiro')
           .select('id, nome, nome_empresa, telefone, tag')
           .in('id', leadIds.slice(0, 100)); // Limitar a 100 leads
         leadsData = leads || [];
@@ -135,7 +135,7 @@ export function useJornadaLeads(telefone?: string) {
 
       // Buscar métricas por estágio
       const { data: metricasData } = await (centralSupabase as any)
-        .from('historico_tags_lead')
+        .from('sieg_fin_historico_tags_lead')
         .select('estagio_novo, tempo_no_estagio_anterior')
         .eq('empresa_id', tenant.id)
         .not('estagio_novo', 'is', null);

@@ -38,7 +38,7 @@ export function PendingInvitesList({ tenantId, onUpdate }: PendingInvitesListPro
         return;
       }
       const { data, error } = await supabase
-        .from('pending_invites')
+        .from('sieg_fin_pending_invites')
         .select('*')
         .eq('workspace_id', tenantId)
         .is('used_at', null)
@@ -62,7 +62,7 @@ export function PendingInvitesList({ tenantId, onUpdate }: PendingInvitesListPro
   const revokeInvite = async (id: string) => {
     try {
       const { error } = await supabase
-        .from('pending_invites')
+        .from('sieg_fin_pending_invites')
         .delete()
         .eq('id', id);
 

@@ -28,7 +28,7 @@ export function AddDatabaseModal({ open, onOpenChange, onSuccess }: AddDatabaseM
 
     try {
       const { error } = await supabase
-        .from('database_configs')
+        .from('sieg_fin_database_configs')
         .insert([formData]);
 
       if (error) throw error;

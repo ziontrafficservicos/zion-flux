@@ -54,7 +54,7 @@ export function usePerformanceData(workspaceId?: string) {
       const to = format(new Date(), 'yyyy-MM-dd');
 
       // Fetch workspaces
-      let query = supabase.from('workspaces').select('*').order('name');
+      let query = supabase.from('sieg_fin_workspaces').select('*').order('name');
       
       if (workspaceId) {
         query = query.eq('id', workspaceId);
@@ -76,7 +76,7 @@ export function usePerformanceData(workspaceId?: string) {
         // Current period
         let currentKpi: any[] = [];
         try {
-          const { data: data, error: rpcError } = await supabase.rpc('kpi_totais_periodo', {
+          const { data: data, error: rpcError } = await supabase.rpc('sieg_fin_kpi_totais_periodo', {
             p_workspace_id: workspace.id,
             p_from: format(sevenDaysAgo, 'yyyy-MM-dd'),
             p_to: to,
@@ -96,7 +96,7 @@ export function usePerformanceData(workspaceId?: string) {
         // Previous period for comparison
         let previousKpi: any[] = [];
         try {
-          const { data: data, error: rpcError } = await supabase.rpc('kpi_totais_periodo', {
+          const { data: data, error: rpcError } = await supabase.rpc('sieg_fin_kpi_totais_periodo', {
             p_workspace_id: workspace.id,
             p_from: format(subDays(sevenDaysAgo, 7), 'yyyy-MM-dd'),
             p_to: format(subDays(new Date(), 1), 'yyyy-MM-dd'),
@@ -127,7 +127,7 @@ export function usePerformanceData(workspaceId?: string) {
 
         // Calculate AI Speed (average analysis time in seconds)
         const { data: currentAiData } = await supabase
-          .from('analise_ia')
+          .from('sieg_fin_analise_ia')
           .select('started_at, ended_at')
           .eq('workspace_id', workspace.id)
           .gte('ended_at', format(sevenDaysAgo, 'yyyy-MM-dd'))
@@ -135,7 +135,7 @@ export function usePerformanceData(workspaceId?: string) {
           .not('ended_at', 'is', null);
 
         const { data: previousAiData } = await supabase
-          .from('analise_ia')
+          .from('sieg_fin_analise_ia')
           .select('started_at, ended_at')
           .eq('workspace_id', workspace.id)
           .gte('ended_at', format(subDays(sevenDaysAgo, 7), 'yyyy-MM-dd'))
@@ -159,11 +159,11 @@ export function usePerformanceData(workspaceId?: string) {
         // Calculate Retention (leads with multiple conversations)
         // Conversas por cliente (ASF/Sieg) via slug
         const { data: wsInfo } = await supabase
-          .from('workspaces')
+          .from('sieg_fin_workspaces')
           .select('slug')
           .eq('id', workspace.id)
           .maybeSingle();
-        const tableName = wsInfo?.slug === 'asf' ? 'conversas_asf' : wsInfo?.slug === 'sieg' ? 'conversas_sieg_financeiro' : 'conversas_asf';
+        const tableName = wsInfo?.slug === 'asf' ? 'sieg_fin_conversas_asf' : wsInfo?.slug === 'sieg' ? 'sieg_fin_conversas_sieg_financeiro' : 'sieg_fin_conversas_asf';
         const dateField = 'created_at';
         const workspaceField = 'id_workspace';
 
@@ -236,7 +236,7 @@ export function usePerformanceData(workspaceId?: string) {
         
         try {
           const { data: kpiData, error: kpiError } = await supabase
-            .from('kpi_overview_daily')
+            .from('sieg_fin_kpi_overview_daily')
             .select('day, leads_recebidos')
             .eq('workspace_id', workspaceId)
             .gte('day', from)

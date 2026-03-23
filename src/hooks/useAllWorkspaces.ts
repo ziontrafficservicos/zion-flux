@@ -62,7 +62,7 @@ export function useAllWorkspaces(): UseAllWorkspacesResult {
       let siegErr: any = null;
 
       try {
-        const asfWs = await (asf.from('workspaces').select('*') as any);
+        const asfWs = await (asf.from('sieg_fin_workspaces').select('*') as any);
         if (asfWs.error) throw asfWs.error;
         asfWsData = asfWs.data || [];
       } catch (e: any) {
@@ -71,7 +71,7 @@ export function useAllWorkspaces(): UseAllWorkspacesResult {
 
       if (sieg) {
         try {
-          const siegWs = await (sieg.from('workspaces').select('*') as any);
+          const siegWs = await (sieg.from('sieg_fin_workspaces').select('*') as any);
           if (siegWs.error) throw siegWs.error;
           siegWsData = siegWs.data || [];
         } catch (e: any) {
@@ -85,10 +85,10 @@ export function useAllWorkspaces(): UseAllWorkspacesResult {
 
       const [asfMembersRes, siegMembersRes] = await Promise.allSettled([
         asfUserId
-          ? asf.rpc('get_user_workspaces', { _user_id: asfUserId })
+          ? asf.rpc('sieg_fin_get_user_workspaces', { _user_id: asfUserId })
           : Promise.resolve({ data: null }),
         sieg && siegUserId
-          ? sieg.rpc('get_user_workspaces', { _user_id: siegUserId })
+          ? sieg.rpc('sieg_fin_get_user_workspaces', { _user_id: siegUserId })
           : Promise.resolve({ data: null }),
       ]);
 

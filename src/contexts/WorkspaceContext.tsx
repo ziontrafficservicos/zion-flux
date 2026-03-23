@@ -84,17 +84,17 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
           
           // Verificar se usuário tem acesso ao workspace salvo usando RPC
           const { data: isMember, error: savedError } = await centralSupabase
-            .rpc('is_workspace_member', { 
-              _user_id: user.id, 
-              _workspace_id: savedWorkspaceId 
+            .rpc('sieg_fin_is_workspace_member', {
+              _user_id: user.id,
+              _workspace_id: savedWorkspaceId
             });
           
           if (!savedError && isMember) {
             console.log('✅ Workspace salvo restaurado com sucesso:', savedWorkspaceId);
             // Buscar informações do workspace via RPC get_user_workspaces
             const { data: workspaceIds } = await centralSupabase
-              .rpc('get_user_workspaces', { _user_id: user.id });
-            
+              .rpc('sieg_fin_get_user_workspaces', { _user_id: user.id });
+
             const hasAccess = workspaceIds?.some((w: any) => w.workspace_id === savedWorkspaceId);
             
             if (hasAccess) {
@@ -116,14 +116,14 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         console.log(`🔍 Buscando workspaces para usuário:`, user.email);
         
         const { data: workspaceIds, error: membershipError } = await centralSupabase
-          .rpc('get_user_workspaces', { _user_id: user.id });
-        
+          .rpc('sieg_fin_get_user_workspaces', { _user_id: user.id });
+
         if (membershipError) {
           console.error('❌ Erro ao buscar membership:', membershipError);
           // Tentar uma consulta mais simples como fallback
           try {
             const { data: fallbackData } = await centralSupabase
-              .rpc('get_workspace_members_with_details', { p_workspace_id: 'b939a331-44d9-4122-ab23-dcd60413bd46' });
+              .rpc('sieg_fin_get_workspace_members_with_details', { p_workspace_id: 'b939a331-44d9-4122-ab23-dcd60413bd46' });
             
             if (fallbackData && fallbackData.length > 0) {
               const userMember = fallbackData.find((m: any) => m.user_id === user.id);
@@ -208,9 +208,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
       // Validar acesso à workspace usando RPC
       const { data: isMember, error: memberError } = await centralSupabase
-        .rpc('is_workspace_member', { 
-          _user_id: user.id, 
-          _workspace_id: id 
+        .rpc('sieg_fin_is_workspace_member', {
+          _user_id: user.id,
+          _workspace_id: id
         });
       
       if (memberError || !isMember) {
@@ -232,7 +232,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       // Salvar como workspace padrão (opcional - não crítico se falhar)
       try {
         await (centralSupabase as any)
-          .from('user_settings')
+          .from('sieg_fin_user_settings')
           .upsert({
             user_id: user.id,
             default_workspace_id: id,

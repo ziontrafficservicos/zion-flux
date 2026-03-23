@@ -45,7 +45,7 @@ export function useTrainerData(workspaceId: string) {
       try {
         // Buscar análises de IA com dados de conversas
         const { data: analysisData, error } = await supabase
-          .from('analise_ia')
+          .from('sieg_fin_analise_ia')
           .select(`
             id,
             summary,

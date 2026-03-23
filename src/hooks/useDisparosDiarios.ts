@@ -69,7 +69,7 @@ export const useDisparosDiarios = (
 
       // Buscar disparos agrupados por dia E por status usando nova RPC
       const { data, error: queryError } = await (supabase as any)
-        .rpc('contar_disparos_por_status', {
+        .rpc('sieg_fin_contar_disparos_por_status', {
           p_empresa_id: tenantId,
           p_data_inicio: startRange.toISOString(),
           p_data_fim: endRange.toISOString()
@@ -83,7 +83,7 @@ export const useDisparosDiarios = (
           
           // Fallback para função antiga
           const { data: dataAntiga, error: erroAntigo } = await (supabase as any)
-            .rpc('contar_disparos_por_dia', {
+            .rpc('sieg_fin_contar_disparos_por_dia', {
               p_empresa_id: tenantId,
               p_data_inicio: startRange.toISOString(),
               p_data_fim: endRange.toISOString()

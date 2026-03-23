@@ -66,7 +66,7 @@ export function useSupabaseConnectionTest(workspaceId: string) {
         let rpcError: any = null;
         
         try {
-          const { data: data, error: error } = await supabase.rpc('kpi_totais_periodo', {
+          const { data: data, error: error } = await supabase.rpc('sieg_fin_kpi_totais_periodo', {
             p_workspace_id: workspaceId,
             p_from: startDate.toISOString().split('T')[0],
             p_to: endDate.toISOString().split('T')[0],
@@ -116,7 +116,7 @@ export function useSupabaseConnectionTest(workspaceId: string) {
         
         try {
           const { data: data, error: error } = await supabase
-            .from('kpi_overview_daily')
+            .from('sieg_fin_kpi_overview_daily')
             .select('day, leads_recebidos, leads_qualificados, leads_followup, leads_descartados, investimento, cpl')
             .eq('workspace_id', workspaceId)
             .gte('day', startDate.toISOString())
