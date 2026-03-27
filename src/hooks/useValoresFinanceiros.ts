@@ -64,52 +64,47 @@ export function useValoresFinanceiros(startDate?: Date, endDate?: Date) {
           // Incluindo valor_recuperado_ia e valor_recuperado_humano
           const { data: financeiroData, error: financeiroError } = await (centralSupabase as any)
             .from('sieg_fin_financeiro')
-            .select('valor_em_aberto, valor_recuperado_ia, valor_recuperado_humano, cnpj, telefone')
+            .select('valor_em_aberto, valor_recuperado_ia, valor_recuperado_humano, cnpj, telefone, situacao, tag')
             .eq('empresa_id', tenant.id);
-          
+
           if (financeiroError) {
-            console.error('💰 [useValoresFinanceiros] Erro ao buscar financeiro_sieg:', financeiroError);
+            console.error('💰 [useValoresFinanceiros] Erro ao buscar financeiro:', financeiroError);
             setIsLoading(false);
             return;
           }
 
-          // Agrupar por CNPJ para evitar duplicatas
-          const valoresPorCnpj = new Map<string, { emAberto: number, recuperadoIA: number, recuperadoHumano: number }>();
           const empresasUnicas = new Set<string>();
-          
+          let totalPendente = 0;
+          let valorRecuperadoIA = 0;
+          let valorRecuperadoHumano = 0;
+
           (financeiroData || []).forEach((item: any) => {
-            const chave = item.cnpj && String(item.cnpj).trim().length > 0 
-              ? String(item.cnpj).trim() 
+            const chave = item.cnpj && String(item.cnpj).trim().length > 0
+              ? String(item.cnpj).trim()
               : item.telefone;
             if (chave) empresasUnicas.add(chave);
-            
-            const valorAtual = valoresPorCnpj.get(chave) || { emAberto: 0, recuperadoIA: 0, recuperadoHumano: 0 };
+
             const valorEmAberto = parseValorBR(item.valor_em_aberto);
             const valorRecIA = parseValorBR(item.valor_recuperado_ia);
             const valorRecHumano = parseValorBR(item.valor_recuperado_humano);
-            
-            // Somar valores (não pegar o maior, pois cada registro pode ter valores diferentes)
-            valoresPorCnpj.set(chave, {
-              emAberto: Math.max(valorAtual.emAberto, valorEmAberto),
-              recuperadoIA: valorAtual.recuperadoIA + valorRecIA,
-              recuperadoHumano: valorAtual.recuperadoHumano + valorRecHumano,
-            });
-          });
 
-          let totalEmAberto = 0;
-          let valorRecuperadoIA = 0;
-          let valorRecuperadoHumano = 0;
-          
-          valoresPorCnpj.forEach((valores) => {
-            totalEmAberto += valores.emAberto;
-            valorRecuperadoIA += valores.recuperadoIA;
-            valorRecuperadoHumano += valores.recuperadoHumano;
+            valorRecuperadoIA += valorRecIA;
+            valorRecuperadoHumano += valorRecHumano;
+
+            // Pendente = valor_em_aberto dos registros que NÃO foram pagos
+            const tagUpper = String(item.tag || '').toUpperCase();
+            const isPago = (item.situacao === 'concluido') ||
+              tagUpper.includes('T3') || tagUpper.includes('PAGO');
+
+            if (!isPago) {
+              totalPendente += valorEmAberto;
+            }
           });
 
           const valorRecuperadoTotal = valorRecuperadoIA + valorRecuperadoHumano;
 
           console.log('💰 [useValoresFinanceiros] Valores GERAIS:', {
-            totalEmAberto,
+            totalPendente,
             valorRecuperadoTotal,
             valorRecuperadoIA,
             valorRecuperadoHumano,
@@ -117,7 +112,7 @@ export function useValoresFinanceiros(startDate?: Date, endDate?: Date) {
           });
 
           setData({
-            valorPendente: totalEmAberto,
+            valorPendente: totalPendente,
             valorRecuperado: valorRecuperadoTotal,
             valorRecuperadoIA,
             valorRecuperadoHumano,
@@ -150,165 +145,74 @@ export function useValoresFinanceiros(startDate?: Date, endDate?: Date) {
 
         console.log(`💰 [useValoresFinanceiros] Período: ${startISO} até ${endISO || 'sem fim'}`);
 
-        // ========== TOTAL COBRADO (disparos enviados no período) ==========
-        let disparosQuery = (centralSupabase as any)
-          .from('sieg_fin_disparos')
-          .select('telefone')
+        // ========== BUSCAR REGISTROS FINANCEIROS DO PERÍODO ==========
+        let finQuery = (centralSupabase as any)
+          .from('sieg_fin_financeiro')
+          .select('valor_em_aberto, valor_recuperado_ia, valor_recuperado_humano, cnpj, telefone, situacao, tag')
           .eq('empresa_id', tenant.id)
-          .eq('status', 'enviado')
           .gte('criado_em', startISO);
-        
-        if (endISO) {
-          disparosQuery = disparosQuery.lt('criado_em', endISO);
-        }
-        
-        const { data: disparosData, error: disparosError } = await disparosQuery;
 
-        if (disparosError) {
-          console.error('💰 [useValoresFinanceiros] Erro ao buscar disparos:', disparosError);
+        if (endISO) {
+          finQuery = finQuery.lt('criado_em', endISO);
+        }
+
+        const { data: financeiroData, error: financeiroError } = await finQuery;
+
+        if (financeiroError) {
+          console.error('💰 [useValoresFinanceiros] Erro ao buscar financeiro:', financeiroError);
           setIsLoading(false);
           return;
         }
 
-        const telefonesEnviados = [...new Set((disparosData || []).map((d: any) => d.telefone).filter(Boolean))];
-        console.log(`💰 [useValoresFinanceiros] Telefones com disparo 'enviado': ${telefonesEnviados.length}`);
+        const allValores = financeiroData || [];
+        console.log(`💰 [useValoresFinanceiros] Registros no período: ${allValores.length}`);
 
-        let totalCobrado = 0;
-
-        // Se teve disparos, buscar valor em aberto dos telefones
-        if (telefonesEnviados.length > 0) {
-          const PAGE_SIZE = 200;
-          let allValores: any[] = [];
-          
-          for (let i = 0; i < telefonesEnviados.length; i += PAGE_SIZE) {
-            const batch = telefonesEnviados.slice(i, i + PAGE_SIZE);
-            
-            let finValorQuery = (centralSupabase as any)
-              .from('sieg_fin_financeiro')
-              .select('valor_em_aberto, cnpj, telefone, data_vencimento')
-              .eq('empresa_id', tenant.id)
-              .in('telefone', batch)
-              .gte('criado_em', startISO);
-
-            if (endISO) {
-              finValorQuery = finValorQuery.lt('criado_em', endISO);
-            }
-
-            const { data: financeiroData, error: financeiroError } = await finValorQuery;
-            
-            if (!financeiroError && financeiroData) {
-              allValores.push(...financeiroData);
-            }
-          }
-
-          // Agrupar por CNPJ para evitar duplicatas (mesmo cliente com múltiplos telefones)
-          const valoresPorCnpj = new Map<string, number>();
-          allValores.forEach((item: any) => {
-            const chave = item.cnpj && String(item.cnpj).trim().length > 0 
-              ? String(item.cnpj).trim() 
-              : item.telefone;
-            const valorAtual = valoresPorCnpj.get(chave) || 0;
-            const valorItem = parseValorBR(item.valor_em_aberto);
-            // Pegar o maior valor para cada CNPJ
-            if (valorItem > valorAtual) {
-              valoresPorCnpj.set(chave, valorItem);
-            }
-          });
-
-          valoresPorCnpj.forEach((valor) => {
-            totalCobrado += valor;
-          });
-
-          console.log(`💰 [useValoresFinanceiros] Total cobrado no período: ${totalCobrado}`);
-        }
-
-        // ========== VALORES RECUPERADOS ==========
-        // Buscar direto da tabela sieg_fin_financeiro pelos telefones que tiveram disparo
-        // Soma valor_recuperado_ia e valor_recuperado_humano independente da tag
+        const empresasUnicas = new Set<string>();
+        let totalPendente = 0;
         let valorRecuperadoIA = 0;
         let valorRecuperadoHumano = 0;
 
-        if (telefonesEnviados.length > 0) {
-          const PAGE_SIZE = 200;
+        allValores.forEach((item: any) => {
+          const chave = item.cnpj && String(item.cnpj).trim().length > 0
+            ? String(item.cnpj).trim()
+            : item.telefone;
+          if (chave) empresasUnicas.add(chave);
 
-          for (let i = 0; i < telefonesEnviados.length; i += PAGE_SIZE) {
-            const batch = telefonesEnviados.slice(i, i + PAGE_SIZE);
-            let finRecQuery = (centralSupabase as any)
-              .from('sieg_fin_financeiro')
-              .select('valor_recuperado_ia, valor_recuperado_humano, telefone')
-              .eq('empresa_id', tenant.id)
-              .in('telefone', batch)
-              .gte('criado_em', startISO);
+          const valorEmAberto = parseValorBR(item.valor_em_aberto);
+          const valorRecIA = parseValorBR(item.valor_recuperado_ia);
+          const valorRecHumano = parseValorBR(item.valor_recuperado_humano);
 
-            if (endISO) {
-              finRecQuery = finRecQuery.lt('criado_em', endISO);
-            }
+          valorRecuperadoIA += valorRecIA;
+          valorRecuperadoHumano += valorRecHumano;
 
-            const { data: finData } = await finRecQuery;
+          // Pendente = valor_em_aberto dos registros que NÃO foram pagos
+          const tagUpper = String(item.tag || '').toUpperCase();
+          const isPago = (item.situacao === 'concluido') ||
+            tagUpper.includes('T3') || tagUpper.includes('PAGO');
 
-            if (finData) {
-              finData.forEach((item: any) => {
-                valorRecuperadoIA += parseValorBR(item.valor_recuperado_ia);
-                valorRecuperadoHumano += parseValorBR(item.valor_recuperado_humano);
-              });
-            }
+          if (!isPago) {
+            totalPendente += valorEmAberto;
           }
-        }
-
-        console.log(`💰 [useValoresFinanceiros] Recuperados: IA=${valorRecuperadoIA}, Humano=${valorRecuperadoHumano}`);
-        
-        console.log(`💰 [useValoresFinanceiros] Recuperados: IA=${valorRecuperadoIA}, Humano=${valorRecuperadoHumano}`);
+        });
 
         const valorRecuperadoTotal = valorRecuperadoIA + valorRecuperadoHumano;
         const metaMensal = 50000.00;
-
-        // Contar empresas únicas (por CNPJ) que receberam cobrança no período
-        const empresasUnicas = new Set<string>();
-        if (telefonesEnviados.length > 0) {
-          const PAGE_SIZE = 200;
-          for (let i = 0; i < telefonesEnviados.length; i += PAGE_SIZE) {
-            const batch = telefonesEnviados.slice(i, i + PAGE_SIZE);
-            let finCnpjQuery = (centralSupabase as any)
-              .from('sieg_fin_financeiro')
-              .select('cnpj, telefone')
-              .eq('empresa_id', tenant.id)
-              .in('telefone', batch)
-              .gte('criado_em', startISO);
-
-            if (endISO) {
-              finCnpjQuery = finCnpjQuery.lt('criado_em', endISO);
-            }
-
-            const { data: cnpjData } = await finCnpjQuery;
-            
-            if (cnpjData) {
-              cnpjData.forEach((item: any) => {
-                const chave = item.cnpj && String(item.cnpj).trim().length > 0 
-                  ? String(item.cnpj).trim() 
-                  : item.telefone;
-                if (chave) empresasUnicas.add(chave);
-              });
-            }
-          }
-        }
         const totalEmpresas = empresasUnicas.size;
 
-        // Valor pendente = Total cobrado - Total recuperado no período
-        const valorPendente = totalCobrado - valorRecuperadoTotal;
+        console.log(`💰 [useValoresFinanceiros] Pendente=${totalPendente}, RecIA=${valorRecuperadoIA}, RecHumano=${valorRecuperadoHumano}, Empresas=${totalEmpresas}`);
 
         setData({
-          valorPendente: Math.max(0, valorPendente),
+          valorPendente: totalPendente,
           valorRecuperado: valorRecuperadoTotal,
-          valorRecuperadoIA: valorRecuperadoIA,
-          valorRecuperadoHumano: valorRecuperadoHumano,
+          valorRecuperadoIA,
+          valorRecuperadoHumano,
           valorEmNegociacao: 0,
           metaMensal,
           totalEmpresas,
         });
-        
+
         console.log('💰 [useValoresFinanceiros] Valores finais:', {
-          totalCobrado,
-          valorPendente,
+          totalPendente,
           valorRecuperado: valorRecuperadoTotal,
           valorRecuperadoIA,
           valorRecuperadoHumano,
