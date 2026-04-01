@@ -241,15 +241,6 @@ const Atendimento = () => {
           />
         </div>
 
-        {/* Métricas de Atendimento */}
-        <AtendimentosKpiCards
-          atendimentosHoje={atendimentosMetrics.atendimentosHoje}
-          atendimentosIA={atendimentosMetrics.atendimentosIA}
-          percentualIA={atendimentosMetrics.percentualIA}
-          atendimentosTransferidos={atendimentosMetrics.atendimentosTransferidos}
-          isLoading={atendimentosMetrics.isLoading}
-        />
-
         {/* CSAT por Analista */}
         <CSATAnalystTable
           data={csatData.data}

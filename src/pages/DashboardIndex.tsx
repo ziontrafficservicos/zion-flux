@@ -23,6 +23,7 @@ import { useValoresFinanceiros } from "@/hooks/useValoresFinanceiros";
 import { DisparosDiariosChart } from "@/components/dashboard/DisparosDiariosChart";
 import logoZionIcon from "@/assets/logo-zion-icon.png";
 import { useTagCountsHistorico, type ContatoFinanceiro } from "@/hooks/useTagCountsHistorico";
+import { parseValorBR } from "@/lib/parseValorBR";
 import { APP_VERSION } from "@/lib/version";
 import { WhatsNewModal } from "@/components/updates/WhatsNewModal";
 
@@ -338,8 +339,8 @@ const DashboardIndex = () => {
         {isSiegFinanceiro && selectedTag && (() => {
           const classificarContato = (item: ContatoFinanceiro): string => {
             const tagUpper = String(item.tag || '').toUpperCase();
-            const valorIA = parseFloat(item.valor_recuperado_ia) || 0;
-            const valorHumano = parseFloat(item.valor_recuperado_humano) || 0;
+            const valorIA = parseValorBR(item.valor_recuperado_ia);
+            const valorHumano = parseValorBR(item.valor_recuperado_humano);
             if (tagUpper.includes('T5') || tagUpper.includes('SUSPENS')) return 'T5 - PASSÍVEL DE SUSPENSÃO';
             if (valorHumano > 0) return 'T3H - PAGO HUMANO';
             if (valorIA > 0) return 'T3 - PAGO IA';
@@ -377,7 +378,7 @@ const DashboardIndex = () => {
                         <th className="text-right py-3 px-2 font-semibold text-muted-foreground">Valor em Aberto</th>
                         <th className="text-right py-3 px-2 font-semibold text-muted-foreground">Recuperado IA</th>
                         <th className="text-right py-3 px-2 font-semibold text-muted-foreground">Recuperado Humano</th>
-                        <th className="text-left py-3 px-2 font-semibold text-muted-foreground">Data</th>
+                        <th className="text-left py-3 px-2 font-semibold text-muted-foreground">Data Disparo</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -386,10 +387,10 @@ const DashboardIndex = () => {
                           <td className="py-3 px-2 font-medium">{contato.nome_empresa || contato.nome || '—'}</td>
                           <td className="py-3 px-2">{contato.telefone}</td>
                           <td className="py-3 px-2">{contato.cnpj || '—'}</td>
-                          <td className="py-3 px-2 text-right">R$ {parseFloat(contato.valor_em_aberto || '0').toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                          <td className="py-3 px-2 text-right text-emerald-600">R$ {parseFloat(contato.valor_recuperado_ia || '0').toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                          <td className="py-3 px-2 text-right text-teal-600">R$ {parseFloat(contato.valor_recuperado_humano || '0').toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                          <td className="py-3 px-2">{contato.criado_em ? new Date(contato.criado_em).toLocaleDateString('pt-BR') : '—'}</td>
+                          <td className="py-3 px-2 text-right">R$ {parseValorBR(contato.valor_em_aberto).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                          <td className="py-3 px-2 text-right text-emerald-600">R$ {parseValorBR(contato.valor_recuperado_ia).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                          <td className="py-3 px-2 text-right text-teal-600">R$ {parseValorBR(contato.valor_recuperado_humano).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                          <td className="py-3 px-2">{contato.data_disparo || (contato.criado_em ? new Date(contato.criado_em).toLocaleDateString('pt-BR') : '—')}</td>
                         </tr>
                       ))}
                     </tbody>

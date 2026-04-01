@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase as centralSupabase } from '@/integrations/supabase/client';
 import { useCurrentTenant } from '@/contexts/TenantContext';
 import { startOfDay, endOfDay } from 'date-fns';
+import { parseValorBR } from '@/lib/parseValorBR';
 
 export interface TagCountsHistorico {
   'T1 - SEM RESPOSTA': number;
@@ -24,6 +25,7 @@ export interface ContatoFinanceiro {
   valor_recuperado_humano: string;
   criado_em: string;
   atendente: string;
+  data_disparo: string;
 }
 
 const DATA_MINIMA = new Date('2025-12-04T00:00:00');
@@ -71,7 +73,7 @@ export function useTagCountsHistorico(startDate?: Date, endDate?: Date) {
         // Buscar todos os registros financeiros do período direto da tabela principal
         let finQuery = (centralSupabase as any)
           .from('sieg_fin_financeiro')
-          .select('id, telefone, nome, nome_empresa, cnpj, tag, valor_em_aberto, valor_recuperado_ia, valor_recuperado_humano, criado_em, atendente')
+          .select('id, telefone, nome, nome_empresa, cnpj, tag, valor_em_aberto, valor_recuperado_ia, valor_recuperado_humano, criado_em, atendente, data_disparo')
           .eq('empresa_id', tenant.id)
           .gte('criado_em', startISO);
 
@@ -105,7 +107,7 @@ export function useTagCountsHistorico(startDate?: Date, endDate?: Date) {
           return;
         }
 
-        // Salvar todos os contatos para uso na lista filtrada
+        // Salvar TODOS os registros — cada disparo é independente (mesmo telefone em datas diferentes = linhas separadas)
         setContatos((allFinanceiroData || []).map((item: any) => ({
           id: item.id,
           telefone: item.telefone || '',
@@ -118,58 +120,59 @@ export function useTagCountsHistorico(startDate?: Date, endDate?: Date) {
           valor_recuperado_humano: item.valor_recuperado_humano || '',
           criado_em: item.criado_em || '',
           atendente: item.atendente || '',
+          data_disparo: item.data_disparo || '',
         })));
 
-        // Contar por tag ATUAL
-        const leadsPerEstagio: Record<string, Set<string>> = {
-          'T1': new Set(),
-          'T2': new Set(),
-          'T3': new Set(),
-          'T3H': new Set(),
-          'T4': new Set(),
-          'T5': new Set(),
+        // Contar por tag ATUAL — cada registro/disparo conta individualmente
+        const leadsPerEstagio: Record<string, number> = {
+          'T1': 0,
+          'T2': 0,
+          'T3': 0,
+          'T3H': 0,
+          'T4': 0,
+          'T5': 0,
         };
 
         (allFinanceiroData || []).forEach((item: any) => {
           const tag = item.tag || '';
           const tagUpper = String(tag).toUpperCase();
-          const valorRecuperadoIA = parseFloat(item.valor_recuperado_ia) || 0;
-          const valorRecuperadoHumano = parseFloat(item.valor_recuperado_humano) || 0;
+          const valorRecuperadoIA = parseValorBR(item.valor_recuperado_ia);
+          const valorRecuperadoHumano = parseValorBR(item.valor_recuperado_humano);
 
           if (tagUpper.includes('T5') || tagUpper.includes('SUSPENS')) {
-            leadsPerEstagio['T5'].add(item.telefone);
+            leadsPerEstagio['T5']++;
           } else if (valorRecuperadoHumano > 0) {
-            leadsPerEstagio['T3H'].add(item.telefone);
+            leadsPerEstagio['T3H']++;
           } else if (valorRecuperadoIA > 0) {
-            leadsPerEstagio['T3'].add(item.telefone);
+            leadsPerEstagio['T3']++;
           } else if (tagUpper.includes('T4') || tagUpper.includes('TRANSFERIDO')) {
-            leadsPerEstagio['T4'].add(item.telefone);
+            leadsPerEstagio['T4']++;
           } else if (tagUpper.includes('T3') || tagUpper.includes('PAGO')) {
-            leadsPerEstagio['T3'].add(item.telefone);
+            leadsPerEstagio['T3']++;
           } else if (tagUpper.includes('T2') || tagUpper.includes('RESPONDIDO') || tagUpper.includes('QUALIFICANDO')) {
-            leadsPerEstagio['T2'].add(item.telefone);
+            leadsPerEstagio['T2']++;
           } else {
-            leadsPerEstagio['T1'].add(item.telefone);
+            leadsPerEstagio['T1']++;
           }
         });
 
         setCounts({
-          'T1 - SEM RESPOSTA': leadsPerEstagio['T1'].size,
-          'T2 - RESPONDIDO': leadsPerEstagio['T2'].size,
-          'T3 - PAGO IA': leadsPerEstagio['T3'].size,
-          'T3H - PAGO HUMANO': leadsPerEstagio['T3H'].size,
-          'T4 - TRANSFERIDO': leadsPerEstagio['T4'].size,
-          'T5 - PASSÍVEL DE SUSPENSÃO': leadsPerEstagio['T5'].size,
+          'T1 - SEM RESPOSTA': leadsPerEstagio['T1'],
+          'T2 - RESPONDIDO': leadsPerEstagio['T2'],
+          'T3 - PAGO IA': leadsPerEstagio['T3'],
+          'T3H - PAGO HUMANO': leadsPerEstagio['T3H'],
+          'T4 - TRANSFERIDO': leadsPerEstagio['T4'],
+          'T5 - PASSÍVEL DE SUSPENSÃO': leadsPerEstagio['T5'],
         });
 
         console.log('📊 [useTagCountsHistorico] Contagens por TAG ATUAL:', {
           total: (allFinanceiroData || []).length,
-          T1: leadsPerEstagio['T1'].size,
-          T2: leadsPerEstagio['T2'].size,
-          T3: leadsPerEstagio['T3'].size,
-          T3H: leadsPerEstagio['T3H'].size,
-          T4: leadsPerEstagio['T4'].size,
-          T5: leadsPerEstagio['T5'].size,
+          T1: leadsPerEstagio['T1'],
+          T2: leadsPerEstagio['T2'],
+          T3: leadsPerEstagio['T3'],
+          T3H: leadsPerEstagio['T3H'],
+          T4: leadsPerEstagio['T4'],
+          T5: leadsPerEstagio['T5'],
         });
 
       } catch (err) {

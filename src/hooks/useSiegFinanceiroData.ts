@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase as centralSupabase } from '@/integrations/supabase/client';
 import { useCurrentTenant } from '@/contexts/TenantContext';
+import { parseValorBR } from '@/lib/parseValorBR';
 import type { ConversationData, ConversationsStats } from './useConversationsData';
 import type { LeadStage } from './useLeadsShared';
 
@@ -54,25 +55,7 @@ function mapCsatToString(nota: number | null): string {
   return 'Insatisfeito';
 }
 
-// Função para parsear valor que pode estar em formato brasileiro (1.601) ou decimal (1601.00)
-function parseValorBR(valor: any): number {
-  if (!valor) return 0;
-  const str = String(valor);
-  // Se tem ponto mas não tem vírgula, e o ponto não está nas últimas 3 posições como decimal
-  // Ex: "1.601" = 1601, "1601.00" = 1601, "1.601,00" = 1601
-  if (str.includes('.') && !str.includes(',')) {
-    const partes = str.split('.');
-    // Se a parte depois do ponto tem 3 dígitos, é separador de milhar
-    if (partes.length === 2 && partes[1].length === 3) {
-      return parseFloat(str.replace('.', ''));
-    }
-  }
-  // Formato brasileiro com vírgula decimal
-  if (str.includes(',')) {
-    return parseFloat(str.replace(/\./g, '').replace(',', '.'));
-  }
-  return parseFloat(str) || 0;
-}
+// parseValorBR importado de @/lib/parseValorBR
 
 function gerarResumoAtendimento(record: SiegFinanceiroRecord): string {
   const partes: string[] = [];

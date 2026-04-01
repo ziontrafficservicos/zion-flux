@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useCurrentTenant } from '@/contexts/TenantContext';
 import { supabase as centralSupabase } from '@/integrations/supabase/client';
 import { startOfDay, endOfDay } from 'date-fns';
+import { parseValorBR } from '@/lib/parseValorBR';
 
 export interface ValoresFinanceiros {
   valorPendente: number;
@@ -48,12 +49,7 @@ export function useValoresFinanceiros(startDate?: Date, endDate?: Date) {
       setError(null);
 
       try {
-        // Função para parsear valor - valores já vêm no formato numérico do banco (ex: "1.003" = 1.003)
-        const parseValorBR = (valor: any): number => {
-          if (!valor) return 0;
-          const num = parseFloat(String(valor));
-          return isNaN(num) ? 0 : num;
-        };
+        // Usa parseValorBR importado — trata formato brasileiro (vírgula) e decimal (ponto)
 
         // ========== MODO SEM FILTRO (GERAL) ==========
         // Quando não tem startDate nem endDate, buscar total geral direto da tabela financeiro_sieg
@@ -64,7 +60,7 @@ export function useValoresFinanceiros(startDate?: Date, endDate?: Date) {
           // Incluindo valor_recuperado_ia e valor_recuperado_humano
           const { data: financeiroData, error: financeiroError } = await (centralSupabase as any)
             .from('sieg_fin_financeiro')
-            .select('valor_em_aberto, valor_recuperado_ia, valor_recuperado_humano, cnpj, telefone, situacao, tag')
+            .select('valor_em_aberto, valor_recuperado_ia, valor_recuperado_humano, cnpj, telefone, situacao, tag, data_disparo, criado_em')
             .eq('empresa_id', tenant.id);
 
           if (financeiroError) {
@@ -73,12 +69,24 @@ export function useValoresFinanceiros(startDate?: Date, endDate?: Date) {
             return;
           }
 
+          // Agrupar por telefone — manter apenas o registro mais recente de cada contato
+          // Isso evita contar o mesmo valor_em_aberto várias vezes quando há múltiplos disparos
+          const registroMaisRecente = new Map<string, any>();
+          (financeiroData || []).forEach((item: any) => {
+            const tel = item.telefone || '';
+            if (!tel) return;
+            const existing = registroMaisRecente.get(tel);
+            if (!existing || (item.criado_em && (!existing.criado_em || item.criado_em > existing.criado_em))) {
+              registroMaisRecente.set(tel, item);
+            }
+          });
+
           const empresasUnicas = new Set<string>();
           let totalPendente = 0;
           let valorRecuperadoIA = 0;
           let valorRecuperadoHumano = 0;
 
-          (financeiroData || []).forEach((item: any) => {
+          registroMaisRecente.forEach((item: any) => {
             const chave = item.cnpj && String(item.cnpj).trim().length > 0
               ? String(item.cnpj).trim()
               : item.telefone;
@@ -103,12 +111,14 @@ export function useValoresFinanceiros(startDate?: Date, endDate?: Date) {
 
           const valorRecuperadoTotal = valorRecuperadoIA + valorRecuperadoHumano;
 
+          const totalRegistros = (financeiroData || []).length;
+
           console.log('💰 [useValoresFinanceiros] Valores GERAIS:', {
             totalPendente,
             valorRecuperadoTotal,
             valorRecuperadoIA,
             valorRecuperadoHumano,
-            totalEmpresas: empresasUnicas.size
+            totalEmpresas: totalRegistros
           });
 
           setData({
@@ -118,7 +128,7 @@ export function useValoresFinanceiros(startDate?: Date, endDate?: Date) {
             valorRecuperadoHumano,
             valorEmNegociacao: 0,
             metaMensal: 50000.00,
-            totalEmpresas: empresasUnicas.size,
+            totalEmpresas: totalRegistros,
           });
           
           setIsLoading(false);
@@ -148,7 +158,7 @@ export function useValoresFinanceiros(startDate?: Date, endDate?: Date) {
         // ========== BUSCAR REGISTROS FINANCEIROS DO PERÍODO ==========
         let finQuery = (centralSupabase as any)
           .from('sieg_fin_financeiro')
-          .select('valor_em_aberto, valor_recuperado_ia, valor_recuperado_humano, cnpj, telefone, situacao, tag')
+          .select('valor_em_aberto, valor_recuperado_ia, valor_recuperado_humano, cnpj, telefone, situacao, tag, data_disparo, criado_em')
           .eq('empresa_id', tenant.id)
           .gte('criado_em', startISO);
 
@@ -167,12 +177,23 @@ export function useValoresFinanceiros(startDate?: Date, endDate?: Date) {
         const allValores = financeiroData || [];
         console.log(`💰 [useValoresFinanceiros] Registros no período: ${allValores.length}`);
 
+        // Agrupar por telefone — manter apenas o registro mais recente de cada contato
+        const registroMaisRecente = new Map<string, any>();
+        allValores.forEach((item: any) => {
+          const tel = item.telefone || '';
+          if (!tel) return;
+          const existing = registroMaisRecente.get(tel);
+          if (!existing || (item.criado_em && (!existing.criado_em || item.criado_em > existing.criado_em))) {
+            registroMaisRecente.set(tel, item);
+          }
+        });
+
         const empresasUnicas = new Set<string>();
         let totalPendente = 0;
         let valorRecuperadoIA = 0;
         let valorRecuperadoHumano = 0;
 
-        allValores.forEach((item: any) => {
+        registroMaisRecente.forEach((item: any) => {
           const chave = item.cnpj && String(item.cnpj).trim().length > 0
             ? String(item.cnpj).trim()
             : item.telefone;
@@ -197,7 +218,7 @@ export function useValoresFinanceiros(startDate?: Date, endDate?: Date) {
 
         const valorRecuperadoTotal = valorRecuperadoIA + valorRecuperadoHumano;
         const metaMensal = 50000.00;
-        const totalEmpresas = empresasUnicas.size;
+        const totalEmpresas = allValores.length;
 
         console.log(`💰 [useValoresFinanceiros] Pendente=${totalPendente}, RecIA=${valorRecuperadoIA}, RecHumano=${valorRecuperadoHumano}, Empresas=${totalEmpresas}`);
 

@@ -1,4 +1,4 @@
-import { DollarSign, AlertTriangle, CheckCircle } from 'lucide-react';
+import { DollarSign, AlertTriangle, CheckCircle, User, Bot } from 'lucide-react';
 
 interface ValoresPendentesProps {
   valorPendente: number;
@@ -103,17 +103,34 @@ export function ValoresPendentesCard({
                   style={{ width: `${pctIA}%` }}
                 />
               </div>
-              <div className="flex justify-between mt-2 text-xs text-gray-500">
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-blue-400 inline-block" />
-                  Humano: {formatCurrency(valorRecuperadoHumano)}
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-purple-400 inline-block" />
-                  IA: {formatCurrency(valorRecuperadoIA)}
-                </span>
-              </div>
             </div>
+          )}
+        </div>
+      </div>
+
+      {/* Cards Pago Humano e Pago IA */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 px-6 pb-6">
+        {/* Pago Humano */}
+        <div className="rounded-xl p-4 bg-blue-50 border border-blue-100">
+          <div className="flex items-center gap-2 mb-2">
+            <User className="w-4 h-4 text-blue-500" />
+            <span className="text-xs font-medium text-blue-600 uppercase tracking-wide">Pago Humano</span>
+          </div>
+          <p className="text-xl font-bold text-gray-900">{formatCurrency(valorRecuperadoHumano)}</p>
+          {totalRec > 0 && (
+            <p className="text-xs text-gray-500 mt-1">{pctHumano.toFixed(1)}% do recuperado</p>
+          )}
+        </div>
+
+        {/* Pago IA */}
+        <div className="rounded-xl p-4 bg-purple-50 border border-purple-100">
+          <div className="flex items-center gap-2 mb-2">
+            <Bot className="w-4 h-4 text-purple-500" />
+            <span className="text-xs font-medium text-purple-600 uppercase tracking-wide">Pago IA</span>
+          </div>
+          <p className="text-xl font-bold text-gray-900">{formatCurrency(valorRecuperadoIA)}</p>
+          {totalRec > 0 && (
+            <p className="text-xs text-gray-500 mt-1">{pctIA.toFixed(1)}% do recuperado</p>
           )}
         </div>
       </div>
