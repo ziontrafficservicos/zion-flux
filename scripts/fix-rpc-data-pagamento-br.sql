@@ -6,6 +6,7 @@ DROP FUNCTION IF EXISTS public.sieg_fin_atualizar_status(TEXT, TEXT, TEXT, TEXT,
 
 CREATE OR REPLACE FUNCTION public.sieg_fin_atualizar_status(
   p_telefone TEXT,
+  p_empresa_id UUID,
   p_nova_tag TEXT DEFAULT NULL,
   p_valor_recuperado TEXT DEFAULT NULL,
   p_tipo_recuperacao TEXT DEFAULT NULL,
@@ -14,8 +15,7 @@ CREATE OR REPLACE FUNCTION public.sieg_fin_atualizar_status(
   p_opiniao_csat TEXT DEFAULT NULL,
   p_historico_conversa TEXT DEFAULT NULL,
   p_data_pagamento TEXT DEFAULT NULL,
-  p_observacoes TEXT DEFAULT NULL,
-  p_empresa_id UUID DEFAULT '0935278d-410d-435c-bc79-adcd8349064b'::UUID
+  p_observacoes TEXT DEFAULT NULL
 )
 RETURNS JSON
 LANGUAGE plpgsql
@@ -166,4 +166,4 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION public.sieg_fin_atualizar_status TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.sieg_fin_atualizar_status TO authenticated, service_role;

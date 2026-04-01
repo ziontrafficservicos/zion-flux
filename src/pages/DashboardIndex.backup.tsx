@@ -73,10 +73,10 @@ const DashboardIndex = () => {
     if (!currentWorkspaceId) return;
     supabase
       .from('sieg_fin_workspaces')
-      .select('database')
+      .select('database_key')
       .eq('id', currentWorkspaceId)
       .maybeSingle()
-      .then(({ data }) => setWorkspaceDb(data?.database || null));
+      .then(({ data }) => setWorkspaceDb(data?.database_key || null));
   }, [currentWorkspaceId]);
 
   // 🔍 DEBUG roiHistory

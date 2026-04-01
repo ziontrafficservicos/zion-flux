@@ -27,8 +27,10 @@ Adicione ESTES 3 headers em TODOS os blocos:
 | Header | Valor |
 |--------|-------|
 | `Content-Type` | `application/json` |
-| `apikey` | `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpmZ2V6cndrc211aG5ybXVkbmFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0NjYwMDUsImV4cCI6MjA4ODA0MjAwNX0.N7VHdl5TIr1vHH5IE3pkhAMGl3siXZEnltaXwYO6Tpo` |
-| `Authorization` | `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpmZ2V6cndrc211aG5ybXVkbmFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0NjYwMDUsImV4cCI6MjA4ODA0MjAwNX0.N7VHdl5TIr1vHH5IE3pkhAMGl3siXZEnltaXwYO6Tpo` |
+| `apikey` | `{SUA_ANON_KEY}` |
+| `Authorization` | `Bearer {SUA_ANON_KEY}` |
+
+> **⚠️ Obtenha a anon key no painel do Supabase: Settings → API → anon/public key**
 
 > **Nota:** O `apikey` e o `Authorization` usam o MESMO token. A diferença é
 > que o Authorization tem a palavra `Bearer ` (com espaço) na frente.
@@ -282,7 +284,7 @@ Para testar se está funcionando, você pode usar o Postman ou o próprio NicoCh
 ## Dúvidas Frequentes
 
 **P: Os valores vêm com vírgula (1.500,00) ou ponto (1500.00)?**
-R: Sempre com PONTO e SEM separador de milhar. Exemplo: `1500.00` (não `1.500,00`)
+R: As RPCs aceitam ambos os formatos: ponto decimal (`1500.00`) e formato BR com vírgula (`1.297,90`). O sistema converte automaticamente. Exemplo: tanto `1500.00` quanto `1.500,00` funcionam.
 
 **P: O telefone precisa ter o +55?**
 R: Não importa. A função remove automaticamente +, espaços e hífens.
