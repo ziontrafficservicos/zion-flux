@@ -49,7 +49,7 @@ SELECT
   'Banco Principal' as nome,
   'asf' as chave_banco,
   'https://wrebkgazdlyjenbpexnc.supabase.co' as url,
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndyZWJrZ2F6ZGx5amVuYnBleG5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1ODgzMTQsImV4cCI6MjA3NTE2NDMxNH0.P2miUZA3TX0ofUEhIdEkwGq-oruyDPiC1GjEcQkun7w' as chave_anon
+  '' as chave_anon -- Use variável de ambiente
 FROM public.empresas 
 WHERE ativa = true 
 LIMIT 1

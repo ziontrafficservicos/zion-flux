@@ -147,7 +147,7 @@ serve(async (req) => {
     // Verify user has access to this workspace if user context exists
     if (user) {
       const { data: membership, error: membershipError } = await supabaseAdmin
-        .from('membros_workspace')
+        .from('sieg_fin_membros_workspace')
         .select('role')
         .eq('workspace_id', workspace_id)
         .eq('user_id', user.id)
@@ -164,7 +164,7 @@ serve(async (req) => {
 
     // Verify workspace uses ASF database (only ASF workspaces have Meta Ads integration)
     const { data: workspace, error: workspaceError } = await supabaseAdmin
-      .from('workspaces')
+      .from('sieg_fin_workspaces')
       .select('database')
       .eq('id', workspace_id)
       .maybeSingle();

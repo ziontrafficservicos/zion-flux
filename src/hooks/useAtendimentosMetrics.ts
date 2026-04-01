@@ -72,20 +72,20 @@ export function useAtendimentosMetrics(_workspaceId: string | null, startDate?: 
       const startISO = toStartOfDayIso(effectiveStart);
       const endISO = buildEndExclusiveIso(effectiveEnd);
 
-      // Para SIEG Financeiro, buscar da tabela financeiro_sieg
+      // Para SIEG Financeiro, buscar da tabela sieg_fin_financeiro
       const isSiegFinanceiro = slug === 'sieg-financeiro' || slug?.includes('financeiro');
-      
+
       logger.info('[Atendimentos] Buscando métricas', {
         tenantId: tenant.id,
         startISO,
         endISO,
-        tabela: isSiegFinanceiro ? 'financeiro_sieg' : 'conversas_leads',
+        tabela: isSiegFinanceiro ? 'sieg_fin_financeiro' : 'sieg_fin_conversas_leads',
       });
 
       let conversations: any[] = [];
 
       if (isSiegFinanceiro) {
-        // Buscar da tabela financeiro_sieg com paginação para pegar todos os registros
+        // Buscar da tabela sieg_fin_financeiro com paginação para pegar todos os registros
         const PAGE_SIZE = 1000;
         let allData: any[] = [];
         
@@ -93,7 +93,7 @@ export function useAtendimentosMetrics(_workspaceId: string | null, startDate?: 
           const from = page * PAGE_SIZE;
           const to = from + PAGE_SIZE - 1;
           
-          let query = (centralSupabase.from as any)('financeiro_sieg')
+          let query = (centralSupabase.from as any)('sieg_fin_financeiro')
             .select('id, tag, atendente, nota_csat, criado_em')
             .eq('empresa_id', tenant.id)
             .order('criado_em', { ascending: false });
@@ -118,8 +118,8 @@ export function useAtendimentosMetrics(_workspaceId: string | null, startDate?: 
         conversations = allData;
         logger.info('[Atendimentos] Total de registros carregados', { total: conversations.length });
       } else {
-        // Buscar da tabela conversas_leads (comportamento original)
-        const { data: conversationsData, error: conversationsError } = await (centralSupabase.from as any)('conversas_leads')
+        // Buscar da tabela sieg_fin_conversas_leads (comportamento original)
+        const { data: conversationsData, error: conversationsError } = await (centralSupabase.from as any)('sieg_fin_conversas_leads')
           .select('id, tag, data_transferencia, analista, csat, data_resposta_csat')
           .eq('empresa_id', tenant.id)
           .gte('data_resposta_csat', startISO)

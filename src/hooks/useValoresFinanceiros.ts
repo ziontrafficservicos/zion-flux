@@ -4,6 +4,8 @@ import { supabase as centralSupabase } from '@/integrations/supabase/client';
 import { startOfDay, endOfDay } from 'date-fns';
 import { parseValorBR } from '@/lib/parseValorBR';
 
+const META_MENSAL_DEFAULT = 50000.00;
+
 export interface ValoresFinanceiros {
   valorPendente: number;
   valorRecuperado: number;
@@ -52,11 +54,11 @@ export function useValoresFinanceiros(startDate?: Date, endDate?: Date) {
         // Usa parseValorBR importado — trata formato brasileiro (vírgula) e decimal (ponto)
 
         // ========== MODO SEM FILTRO (GERAL) ==========
-        // Quando não tem startDate nem endDate, buscar total geral direto da tabela financeiro_sieg
+        // Quando não tem startDate nem endDate, buscar total geral direto da tabela sieg_fin_financeiro
         if (!startDate && !endDate) {
           console.log(`💰 [useValoresFinanceiros] Modo GERAL - buscando totais sem filtro de data`);
           
-          // Buscar todos os registros da tabela financeiro_sieg para este tenant
+          // Buscar todos os registros da tabela sieg_fin_financeiro para este tenant
           // Incluindo valor_recuperado_ia e valor_recuperado_humano
           const { data: financeiroData, error: financeiroError } = await (centralSupabase as any)
             .from('sieg_fin_financeiro')
@@ -127,7 +129,7 @@ export function useValoresFinanceiros(startDate?: Date, endDate?: Date) {
             valorRecuperadoIA,
             valorRecuperadoHumano,
             valorEmNegociacao: 0,
-            metaMensal: 50000.00,
+            metaMensal: META_MENSAL_DEFAULT,
             totalEmpresas: totalRegistros,
           });
           
@@ -217,7 +219,7 @@ export function useValoresFinanceiros(startDate?: Date, endDate?: Date) {
         });
 
         const valorRecuperadoTotal = valorRecuperadoIA + valorRecuperadoHumano;
-        const metaMensal = 50000.00;
+        const metaMensal = META_MENSAL_DEFAULT;
         const totalEmpresas = allValores.length;
 
         console.log(`💰 [useValoresFinanceiros] Pendente=${totalPendente}, RecIA=${valorRecuperadoIA}, RecHumano=${valorRecuperadoHumano}, Empresas=${totalEmpresas}`);

@@ -2,11 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase as centralSupabase } from '@/integrations/supabase/client';
 import { useCurrentTenant } from '@/contexts/TenantContext';
 import { parseValorBR } from '@/lib/parseValorBR';
+import { SIEG_EMPRESA_ID } from '@/lib/constants';
 import type { ConversationData, ConversationsStats } from './useConversationsData';
 import type { LeadStage } from './useLeadsShared';
-
-// ID fixo do workspace SIEG Financeiro
-const SIEG_EMPRESA_ID = '98ce360f-baf2-46ff-8d98-f7af80d225fa';
 
 interface SiegFinanceiroRecord {
   id: string;

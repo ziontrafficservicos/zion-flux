@@ -281,11 +281,11 @@ export async function fetchTenantLeads({
   
   console.log('[fetchTenantLeads] Iniciando busca de leads...', { tenantId, tenantSlug });
   
-  // Verificar se é SIEG Financeiro - usar tabela financeiro_sieg
+  // Verificar se é SIEG Financeiro - usar tabela sieg_fin_financeiro
   const isSiegFinanceiro = tenantSlug === 'sieg-financeiro' || tenantSlug?.includes('financeiro');
   
   if (isSiegFinanceiro) {
-    console.log('[fetchTenantLeads] 🏦 Workspace SIEG Financeiro detectado - usando tabela financeiro_sieg');
+    console.log('[fetchTenantLeads] 🏦 Workspace SIEG Financeiro detectado - usando tabela sieg_fin_financeiro');
     return fetchSiegFinanceiroLeads(supabaseClient, tenantId, startISO, endISO, getStageFromTag, mappingsLoading, tenantSlug);
   }
 
@@ -403,7 +403,7 @@ export async function fetchTenantLeads({
   return { columns, leads };
 }
 
-// Função específica para buscar dados do SIEG Financeiro da tabela financeiro_sieg
+// Função específica para buscar dados do SIEG Financeiro da tabela sieg_fin_financeiro
 async function fetchSiegFinanceiroLeads(
   supabaseClient: any,
   tenantId: string,
@@ -414,14 +414,14 @@ async function fetchSiegFinanceiroLeads(
   tenantSlug?: string
 ): Promise<FetchTenantLeadsResult> {
   
-  console.log('[fetchSiegFinanceiroLeads] 🏦 Buscando dados da tabela financeiro_sieg...');
+  console.log('[fetchSiegFinanceiroLeads] 🏦 Buscando dados da tabela sieg_fin_financeiro...');
   console.log('[fetchSiegFinanceiroLeads] 📋 Parâmetros:', { tenantId, tenantSlug, startISO, endISO });
   
   const columns = createEmptyStageMap();
   const leads: LeadFromConversation[] = [];
   const leadByEmpresaKey = new Map<string, LeadFromConversation>();
 
-  // Buscar dados da tabela financeiro_sieg com paginação e filtro de data
+  // Buscar dados da tabela sieg_fin_financeiro com paginação e filtro de data
   for (let page = 0; page < 200; page++) {
     const from = page * PAGE_SIZE;
     const to = from + PAGE_SIZE - 1;

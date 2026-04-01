@@ -11,6 +11,7 @@ const corsHeaders = {
 }
 
 // ID fixo da SIEG Financeiro (padrão)
+// DUPLICADO de src/lib/constants.ts — manter sincronizado
 const SIEG_EMPRESA_ID = '98ce360f-baf2-46ff-8d98-f7af80d225fa'
 
 // Prioridade dos status (maior número = maior prioridade)
@@ -74,7 +75,7 @@ serve(async (req) => {
 
       // Buscar disparo existente para esse telefone hoje
       const { data: disparoExistente, error: erroConsulta } = await supabase
-        .from('disparos')
+        .from('sieg_fin_disparos')
         .select('id, status')
         .eq('empresa_id', empresaId)
         .eq('telefone', telefone)
@@ -94,7 +95,7 @@ serve(async (req) => {
         // Só atualiza se o novo status tem prioridade maior
         if (prioridadeNovo > prioridadeAtual) {
           const { error: erroUpdate } = await supabase
-            .from('disparos')
+            .from('sieg_fin_disparos')
             .update({ status: statusRecebido })
             .eq('id', disparoExistente.id)
 
@@ -151,7 +152,7 @@ serve(async (req) => {
     console.log('💾 [Disparo] Inserindo novo:', JSON.stringify(dadosDisparo))
 
     const { data, error } = await supabase
-      .from('disparos')
+      .from('sieg_fin_disparos')
       .insert(dadosDisparo)
       .select()
       .single()
@@ -166,12 +167,12 @@ serve(async (req) => {
 
     console.log('✅ [Disparo] Sucesso! ID:', data.id)
 
-    // RESET DIÁRIO: Se disparo foi 'enviado', resetar tag para T1 na tabela financeiro_sieg
+    // RESET DIÁRIO: Se disparo foi 'enviado', resetar tag para T1 na tabela sieg_fin_financeiro
     // Isso permite acompanhar a jornada diária do lead
     if (statusRecebido === 'enviado' && telefone) {
       // Buscar dados financeiros do telefone para registrar valor pendente
       const { data: dadosFinanceiro, error: erroFinanceiro } = await supabase
-        .from('financeiro_sieg')
+        .from('sieg_fin_financeiro')
         .select('id, valor_em_aberto, cnpj')
         .eq('empresa_id', empresaId)
         .eq('telefone', telefone)
@@ -183,7 +184,7 @@ serve(async (req) => {
 
         // Resetar tag para T1
         const { error: erroResetTag } = await supabase
-          .from('financeiro_sieg')
+          .from('sieg_fin_financeiro')
           .update({ tag: 'T1 - SEM RESPOSTA' })
           .eq('id', dadosFinanceiro.id)
 
@@ -196,7 +197,7 @@ serve(async (req) => {
         // Registrar valor pendente no histórico (se > 0)
         if (valorEmAberto > 0) {
           const { error: erroHistorico } = await supabase
-            .from('historico_valores_financeiros')
+            .from('sieg_fin_historico_valores_financeiros')
             .insert({
               empresa_id: empresaId,
               financeiro_id: dadosFinanceiro.id,
@@ -216,7 +217,7 @@ serve(async (req) => {
           }
         }
       } else {
-        console.log(`⚠️ [Disparo] Telefone ${telefone} não encontrado em financeiro_sieg`)
+        console.log(`⚠️ [Disparo] Telefone ${telefone} não encontrado em sieg_fin_financeiro`)
       }
     }
 

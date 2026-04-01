@@ -82,7 +82,7 @@ export function useReportData(workspaceId: string | null, fromDate: Date, toDate
 
         if (leadIds.length > 0) {
           const { data: conversasData, error: conversasError } = await (centralSupabase.from as any)
-            ('conversas_leads')
+            ('sieg_fin_conversas_leads')
             .select('lead_id, tag, source, created_at, data_transferencia, data_conclusao, analista, csat, data_resposta_csat')
             .in('lead_id', leadIds)
             .eq('empresa_id', tenant.id);

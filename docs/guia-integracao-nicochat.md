@@ -45,7 +45,7 @@ Logo DEPOIS que o template de cobrança é enviado pro cliente via WhatsApp.
 
 ### URL
 ```
-https://zfgezrwksmuhnrmudnas.supabase.co/rest/v1/rpc/sieg_fin_registrar_disparo
+https://iifiijbrzcjgukjeywuf.supabase.co/rest/v1/rpc/sieg_fin_registrar_disparo
 ```
 
 ### Body (corpo da mensagem)
@@ -83,7 +83,7 @@ Quando o cliente responde a mensagem de cobrança (qualquer resposta).
 
 ### URL
 ```
-https://zfgezrwksmuhnrmudnas.supabase.co/rest/v1/rpc/sieg_fin_atualizar_status
+https://iifiijbrzcjgukjeywuf.supabase.co/rest/v1/rpc/sieg_fin_atualizar_status
 ```
 
 ### Body
@@ -108,7 +108,7 @@ está correto. O cliente pagou e foi resolvido pela IA, sem precisar de humano.
 
 ### URL
 ```
-https://zfgezrwksmuhnrmudnas.supabase.co/rest/v1/rpc/sieg_fin_atualizar_status
+https://iifiijbrzcjgukjeywuf.supabase.co/rest/v1/rpc/sieg_fin_atualizar_status
 ```
 
 ### Body
@@ -148,7 +148,7 @@ Por exemplo: cliente quer negociar, tem dúvidas, comprovante ilegível, etc.
 
 ### URL
 ```
-https://zfgezrwksmuhnrmudnas.supabase.co/rest/v1/rpc/sieg_fin_atualizar_status
+https://iifiijbrzcjgukjeywuf.supabase.co/rest/v1/rpc/sieg_fin_atualizar_status
 ```
 
 ### Body
@@ -182,7 +182,7 @@ Esse é o momento final do atendimento humano, geralmente após a pesquisa CSAT.
 
 ### URL
 ```
-https://zfgezrwksmuhnrmudnas.supabase.co/rest/v1/rpc/sieg_fin_atualizar_status
+https://iifiijbrzcjgukjeywuf.supabase.co/rest/v1/rpc/sieg_fin_atualizar_status
 ```
 
 ### Body
@@ -227,7 +227,7 @@ sem pagamento. Use este ponto só se precisar marcar manualmente.
 
 ### URL
 ```
-https://zfgezrwksmuhnrmudnas.supabase.co/rest/v1/rpc/sieg_fin_atualizar_status
+https://iifiijbrzcjgukjeywuf.supabase.co/rest/v1/rpc/sieg_fin_atualizar_status
 ```
 
 ### Body

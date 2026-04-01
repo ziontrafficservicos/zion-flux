@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 
 // Banco SIEG
 const siegUrl = 'https://vrbgptrmmvsaoozrplng.supabase.co';
-const siegKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyYmdwdHJtbXZzYW9venJwbG5nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA4MTQxNDgsImV4cCI6MjA3NjM5MDE0OH0.q7GPpHQxCG-V5J0BZlKZoPy57XJiQCqLCA1Ya72HxPI';
+const siegKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const sieg = createClient(siegUrl, siegKey);
 

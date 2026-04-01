@@ -1,5 +1,5 @@
 // supabase/functions/webhook-sieg-financeiro/index.ts
-// Webhook para receber dados do NicoChat e salvar/atualizar no banco financeiro_sieg
+// Webhook para receber dados do NicoChat e salvar/atualizar no banco sieg_fin_financeiro
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -9,6 +9,7 @@ const corsHeaders = {
 }
 
 // ID fixo do workspace SIEG Financeiro (tabela empresas/tenants_new)
+// DUPLICADO de src/lib/constants.ts — manter sincronizado
 const SIEG_EMPRESA_ID = '98ce360f-baf2-46ff-8d98-f7af80d225fa'
 
 // Parseia valores monetários em formato brasileiro (vírgula) ou decimal (ponto)
@@ -93,7 +94,7 @@ serve(async (req) => {
 
     // Buscar registro existente pelo telefone + data_disparo (chave única por disparo)
     const { data: existente } = await supabase
-      .from('financeiro_sieg')
+      .from('sieg_fin_financeiro')
       .select('id')
       .eq('telefone', body.telefone)
       .eq('empresa_id', SIEG_EMPRESA_ID)
@@ -152,7 +153,7 @@ serve(async (req) => {
     if (existente) {
       // ATUALIZAR registro existente
       const { data, error } = await supabase
-        .from('financeiro_sieg')
+        .from('sieg_fin_financeiro')
         .update(dados)
         .eq('id', existente.id)
         .select()
@@ -180,7 +181,7 @@ serve(async (req) => {
       dados.criado_em = agora
 
       const { data, error } = await supabase
-        .from('financeiro_sieg')
+        .from('sieg_fin_financeiro')
         .insert(dados)
         .select()
         .single()

@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
 
     // Verify invite exists and is valid (using anon client - RLS policy "Anyone can view invite by token" allows this)
     const { data: invite, error: inviteError } = await supabasePublic
-      .from('pending_invites')
+      .from('sieg_fin_pending_invites')
       .select('*')
       .eq('token', token)
       .is('used_at', null)
@@ -131,7 +131,7 @@ Deno.serve(async (req) => {
     });
 
     const { data: existingMembership, error: membershipFetchError } = await supabaseAdmin
-      .from('tenant_users')
+      .from('sieg_fin_tenant_users')
       .select('user_id, active')
       .eq('tenant_id', effectiveTenantId)
       .eq('user_id', user_id)
@@ -144,7 +144,7 @@ Deno.serve(async (req) => {
 
     if (existingMembership) {
       const { error: updateMembershipError } = await supabaseAdmin
-        .from('tenant_users')
+        .from('sieg_fin_tenant_users')
         .update({
           role: invite.role,
           active: true,
@@ -160,7 +160,7 @@ Deno.serve(async (req) => {
       }
     } else {
       const { error: insertMembershipError } = await supabaseAdmin
-        .from('tenant_users')
+        .from('sieg_fin_tenant_users')
         .insert({
           tenant_id: effectiveTenantId,
           user_id,
@@ -194,7 +194,7 @@ Deno.serve(async (req) => {
           }));
 
           const { error: permissionsError } = await supabaseAdmin
-            .from('user_permissions')
+            .from('sieg_fin_user_permissions')
             .insert(permissionInserts, { onConflict: 'workspace_id,user_id,permission_key' })
             .select();
 
@@ -213,7 +213,7 @@ Deno.serve(async (req) => {
 
     // Mark invite as used
     const { error: updateError } = await supabaseAdmin
-      .from('pending_invites')
+      .from('sieg_fin_pending_invites')
       .update({ used_at: new Date().toISOString() })
       .eq('token', token);
 

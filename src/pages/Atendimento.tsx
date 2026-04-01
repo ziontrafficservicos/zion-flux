@@ -45,7 +45,7 @@ const Atendimento = () => {
     refetch: refetchGeneric,
   } = useConversationsData(currentTenant?.id || '', dateRange?.from, dateRange?.to);
 
-  // Hook específico para SIEG Financeiro (busca da tabela financeiro_sieg)
+  // Hook específico para SIEG Financeiro (busca da tabela sieg_fin_financeiro)
   const {
     conversations: siegConversations,
     stats: siegStats,

@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
 
     // Buscar configuração do banco alvo
     const { data: dbConfig, error: dbConfigError } = await supabaseClient
-      .from('database_configs')
+      .from('sieg_fin_configuracoes_banco')
       .select('url, service_role_secret_name')
       .eq('database_key', database)
       .single();
@@ -82,7 +82,7 @@ Deno.serve(async (req) => {
 
     // Criar workspace no banco alvo
     const { data: workspace, error: workspaceError } = await targetClient
-      .from('workspaces')
+      .from('sieg_fin_workspaces')
       .insert([{
         name,
         slug,
@@ -122,7 +122,7 @@ Deno.serve(async (req) => {
 
     // Adicionar owners
     const { error: memberError } = await targetClient
-      .from('membros_workspace')
+      .from('sieg_fin_membros_workspace')
       .insert(ownersToAdd);
 
     if (memberError) {

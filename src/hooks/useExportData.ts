@@ -31,15 +31,15 @@ export function useExportData() {
       const startISO = startDate ? toStartOfDay(startDate) : `${MIN_DATA_DATE}T00:00:00`;
       const endISO = endDate ? buildEndExclusive(endDate) : buildEndExclusive(new Date());
 
-      // Verificar se é SIEG Financeiro - usar tabela financeiro_sieg
+      // Verificar se é SIEG Financeiro - usar tabela sieg_fin_financeiro
       const isSiegFinanceiro = currentTenant?.slug === 'sieg-financeiro' || currentTenant?.slug?.includes('financeiro');
-      
+
       if (isSiegFinanceiro) {
-        // Exportar da tabela financeiro_sieg
+        // Exportar da tabela sieg_fin_financeiro
         return await exportSiegFinanceiro(tenantId, startISO, endISO, format, toast, setIsExporting);
       }
 
-      const { data: rawConversations, error } = await (centralSupabase.from as any)('conversas_leads')
+      const { data: rawConversations, error } = await (centralSupabase.from as any)('sieg_fin_conversas_leads')
         .select('id, lead_id, empresa_id, nome, telefone, tag, source, data_transferencia, data_conclusao, analista, csat, csat_feedback, origem_atendimento, data_resposta_csat, conversas')
         .eq('empresa_id', tenantId)
         .gte('data_resposta_csat', startISO)
@@ -309,7 +309,7 @@ function buildEndExclusive(date: Date) {
 }
 
 /**
- * Exporta dados específicos da tabela financeiro_sieg
+ * Exporta dados específicos da tabela sieg_fin_financeiro
  */
 async function exportSiegFinanceiro(
   tenantId: string,
@@ -320,8 +320,8 @@ async function exportSiegFinanceiro(
   setIsExporting: (v: boolean) => void
 ) {
   try {
-    // Buscar dados da tabela financeiro_sieg
-    const { data: rawData, error } = await (centralSupabase.from as any)('financeiro_sieg')
+    // Buscar dados da tabela sieg_fin_financeiro
+    const { data: rawData, error } = await (centralSupabase.from as any)('sieg_fin_financeiro')
       .select('id, nome, nome_empresa, cnpj, telefone, valor_em_aberto, valor_recuperado_ia, valor_recuperado_humano, em_negociacao, situacao, tag, data_vencimento, data_pagamento, observacoes, criado_em, atualizado_em, atendente, nota_csat, opiniao_csat, historico_conversa')
       .eq('empresa_id', tenantId)
       .gte('criado_em', startISO)

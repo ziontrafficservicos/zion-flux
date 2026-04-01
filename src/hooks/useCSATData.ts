@@ -200,7 +200,7 @@ export function useCSATData(_workspaceId: string, startDate?: Date, endDate?: Da
 
         console.log('📅 DEBUG CSAT - Filtro:', { tenantId: tenant.id, startDate: filterStartDate, endDate: filterEndDate });
 
-        // Para SIEG Financeiro, buscar da tabela financeiro_sieg COM PAGINAÇÃO
+        // Para SIEG Financeiro, buscar da tabela sieg_fin_financeiro COM PAGINAÇÃO
         const PAGE_SIZE = 1000;
         let allRegistros: any[] = [];
         let fetchError: any = null;
@@ -242,7 +242,7 @@ export function useCSATData(_workspaceId: string, startDate?: Date, endDate?: Da
         
         const registros = allRegistros;
 
-        console.log('🔍 DEBUG CSAT - Dados brutos financeiro_sieg:', { totalRegistros: registros?.length || 0 });
+        console.log('🔍 DEBUG CSAT - Dados brutos sieg_fin_financeiro:', { totalRegistros: registros?.length || 0 });
         
         // DEBUG: Mostrar exemplos de registros com seus campos
         console.log('🔬 DEBUG CSAT - Exemplos de registros:', registros?.slice(0, 5).map(r => ({

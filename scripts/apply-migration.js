@@ -8,7 +8,7 @@ const __dirname = dirname(__filename);
 
 // Configuração do Supabase
 const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://wrebkgazdlyjenbpexnc.supabase.co';
-const supabaseKey = process.env.VITE_SUPABASE_PUBLISHABLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndyZWJrZ2F6ZGx5amVuYnBleG5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1ODgzMTQsImV4cCI6MjA3NTE2NDMxNH0.P2miUZA3TX0ofUEhIdEkwGq-oruyDPiC1GjEcQkun7w';
+const supabaseKey = process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
