@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
 const url = 'https://wrebkgazdlyjenbpexnc.supabase.co';
-const key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndyZWJrZ2F6ZGx5amVuYnBleG5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1ODgzMTQsImV4cCI6MjA3NTE2NDMxNH0.P2miUZA3TX0ofUEhIdEkwGq-oruyDPiC1GjEcQkun7w';
+const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const supabase = createClient(url, key);
 
@@ -13,7 +13,7 @@ async function finalFix() {
     .from('database_configs')
     .update({
       url: 'https://wrebkgazdlyjenbpexnc.supabase.co',
-      anon_key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndyZWJrZ2F6ZGx5amVuYnBleG5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1ODgzMTQsImV4cCI6MjA3NTE2NDMxNH0.P2miUZA3TX0ofUEhIdEkwGq-oruyDPiC1GjEcQkun7w'
+      anon_key: process.env.SUPABASE_SERVICE_ROLE_KEY
     })
     .eq('database_key', 'sieg');
 

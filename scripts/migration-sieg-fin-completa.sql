@@ -1,6 +1,6 @@
 -- ============================================================
 -- MIGRATION COMPLETA: Zion Flux → Padrão sieg_fin_*
--- Banco: zfgezrwksmuhnrmudnas
+-- Banco: iifiijbrzcjgukjeywuf
 -- Data: 2026-03-21
 -- Autor: JARVIS (Agente DB Sage)
 -- ============================================================

@@ -6,7 +6,7 @@
 
 // Configurações
 const FUNCTION_URL = 'https://wrebkgazdlyjenbpexnc.supabase.co/functions/v1/create-workspace';
-const API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndyZWJrZ2F6ZGx5amVuYnBleG5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1ODgzMTQsImV4cCI6MjA3NTE2NDMxNH0.P2miUZA3TX0ofUEhIdEkwGq-oruyDPiC1GjEcQkun7w';
+const API_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 // Função para executar uma etapa
 async function executeStep(stepName, stepDescription) {

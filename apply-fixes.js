@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
 
 const supabaseUrl = 'https://wrebkgazdlyjenbpexnc.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndyZWJrZ2F6ZGx5amVuYnBleG5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1ODgzMTQsImV4cCI6MjA3NTE2NDMxNH0.P2miUZA3TX0ofUEhIdEkwGq-oruyDPiC1GjEcQkun7w';
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -18,14 +18,14 @@ async function applyFixes() {
         name: 'ASF Finance',
         database_key: 'asf',
         url: 'https://wrebkgazdlyjenbpexnc.supabase.co',
-        anon_key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndyZWJrZ2F6ZGx5amVuYnBleG5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1ODgzMTQsImV4cCI6MjA3NTE2NDMxNH0.P2miUZA3TX0ofUEhIdEkwGq-oruyDPiC1GjEcQkun7w',
+        anon_key: process.env.SUPABASE_SERVICE_ROLE_KEY,
         active: true
       },
       {
         name: 'SIEG Financeiro',
         database_key: 'sieg',
         url: 'https://vrbgptrmmvsaoozrplng.supabase.co',
-        anon_key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyYmdwdHJtbXZzYW9venJwbG5nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA4MTQxNDgsImV4cCI6MjA3NjM5MDE0OH0.q7GPpHQxCG-V5J0BZlKZoPy57XJiQCqLCA1Ya72HxPI',
+        anon_key: process.env.SUPABASE_SIEG_ANON_KEY,
         active: true
       }
     ];

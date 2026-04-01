@@ -1,5 +1,5 @@
 // supabase/functions/webhook-sieg-financeiro/index.ts
-// Webhook para receber dados do NicoChat e salvar/atualizar no banco financeiro_sieg
+// Webhook para receber dados do NicoChat e salvar/atualizar no banco sieg_fin_financeiro
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -9,7 +9,30 @@ const corsHeaders = {
 }
 
 // ID fixo do workspace SIEG Financeiro (tabela empresas/tenants_new)
+// DUPLICADO de src/lib/constants.ts — manter sincronizado
 const SIEG_EMPRESA_ID = '98ce360f-baf2-46ff-8d98-f7af80d225fa'
+
+// Parseia valores monetários em formato brasileiro (vírgula) ou decimal (ponto)
+function parseValorBR(valor: any): number {
+  if (!valor && valor !== 0) return 0;
+  if (typeof valor === 'number') return isNaN(valor) ? 0 : valor;
+  const str = String(valor).trim().replace(/^R\$\s*/i, '').trim();
+  if (!str) return 0;
+  let result: number;
+  if (str.includes('.') && !str.includes(',')) {
+    const partes = str.split('.');
+    if (partes.length === 2 && partes[1].length === 3) {
+      result = parseFloat(str.replace('.', ''));
+      return isNaN(result) ? 0 : result;
+    }
+  }
+  if (str.includes(',')) {
+    result = parseFloat(str.replace(/\./g, '').replace(',', '.'));
+    return isNaN(result) ? 0 : result;
+  }
+  result = parseFloat(str);
+  return isNaN(result) ? 0 : result;
+}
 
 serve(async (req) => {
   // Handle CORS preflight
@@ -61,23 +84,31 @@ serve(async (req) => {
       )
     }
 
-    // Buscar registro existente pelo telefone
+    // Gerar data de hoje no fuso de Brasília (formato DD/MM/YYYY para compatibilidade com NicoChat)
+    const agora = new Date().toLocaleString('sv-SE', { timeZone: 'America/Sao_Paulo' }).replace(' ', 'T') + '-03:00'
+    const hojeObj = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }))
+    const dataDisparoHoje = `${String(hojeObj.getDate()).padStart(2, '0')}/${String(hojeObj.getMonth() + 1).padStart(2, '0')}/${hojeObj.getFullYear()}`
+
+    // Data do disparo: usa a enviada no body ou a data de hoje
+    const dataDisparo = body.data_disparo || dataDisparoHoje
+
+    // Buscar registro existente pelo telefone + data_disparo (chave única por disparo)
     const { data: existente } = await supabase
-      .from('financeiro_sieg')
+      .from('sieg_fin_financeiro')
       .select('id')
       .eq('telefone', body.telefone)
       .eq('empresa_id', SIEG_EMPRESA_ID)
-      .order('criado_em', { ascending: false })
+      .eq('data_disparo', dataDisparo)
       .limit(1)
       .single()
 
-    // Preparar dados base - usando fuso horário de Brasília
-    const agora = new Date().toLocaleString('sv-SE', { timeZone: 'America/Sao_Paulo' }).replace(' ', 'T') + '-03:00'
+    // Preparar dados base
     const dados: any = {
       empresa_id: SIEG_EMPRESA_ID,
       atualizado_em: agora,
+      data_disparo: dataDisparo,
     }
-    
+
     // Telefone só é adicionado em novos registros
     if (!existente) {
       dados.telefone = body.telefone
@@ -87,10 +118,10 @@ serve(async (req) => {
     if (body.nome_empresa) dados.nome_empresa = body.nome_empresa
     if (body.nome) dados.nome = body.nome
     if (body.cnpj) dados.cnpj = body.cnpj
-    if (body.valor_em_aberto !== undefined) dados.valor_em_aberto = parseFloat(body.valor_em_aberto) || 0
-    if (body.valor_recuperado_ia !== undefined) dados.valor_recuperado_ia = parseFloat(body.valor_recuperado_ia) || 0
-    if (body.valor_recuperado_humano !== undefined) dados.valor_recuperado_humano = parseFloat(body.valor_recuperado_humano) || 0
-    if (body.em_negociacao !== undefined) dados.em_negociacao = parseFloat(body.em_negociacao) || 0
+    if (body.valor_em_aberto !== undefined) dados.valor_em_aberto = parseValorBR(body.valor_em_aberto)
+    if (body.valor_recuperado_ia !== undefined) dados.valor_recuperado_ia = parseValorBR(body.valor_recuperado_ia)
+    if (body.valor_recuperado_humano !== undefined) dados.valor_recuperado_humano = parseValorBR(body.valor_recuperado_humano)
+    if (body.em_negociacao !== undefined) dados.em_negociacao = parseValorBR(body.em_negociacao)
     if (body.situacao) dados.situacao = body.situacao
     if (body.tag) dados.tag = body.tag
     if (body.data_pagamento) dados.data_pagamento = body.data_pagamento
@@ -122,7 +153,7 @@ serve(async (req) => {
     if (existente) {
       // ATUALIZAR registro existente
       const { data, error } = await supabase
-        .from('financeiro_sieg')
+        .from('sieg_fin_financeiro')
         .update(dados)
         .eq('id', existente.id)
         .select()
@@ -150,7 +181,7 @@ serve(async (req) => {
       dados.criado_em = agora
 
       const { data, error } = await supabase
-        .from('financeiro_sieg')
+        .from('sieg_fin_financeiro')
         .insert(dados)
         .select()
         .single()

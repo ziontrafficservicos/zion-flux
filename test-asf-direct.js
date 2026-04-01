@@ -6,7 +6,7 @@
 import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL = 'https://wrebkgazdlyjenbpexnc.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndyZWJrZ2F6ZGx5amVuYnBleG5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1ODgzMTQsImV4cCI6MjA3NTE2NDMxNH0.P2miUZA3TX0ofUEhIdEkwGq-oruyDPiC1GjEcQkun7w';
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ACCESS_TOKEN = 'EAAP5iBZBDclMBP2GZArb4WgHSQ3uEJBfEijvPtfXL7pgpLszVY84406rBZA8dpAQd15knKSo8tkY2NntboUKkZCBEhRs2faAyDk5l4WHbDYMKanXZBGWZB7Kg0pweHuDFvdQDyZAY69EiqjqEDsvmFHxAZB1EbytsmeXRC4lFN8SOOZBY8Xrrc3ibfh8jSh3ZAa39LCzF90SMJeP41rOmG';
 const ASF_WORKSPACE_ID = '01d0cff7-2de1-4731-af0d-ee62f5ba974b';
 

@@ -17,4 +17,4 @@ SELECT
   updated_at
 FROM public.sieg_fin_empresas;
 
-GRANT SELECT ON public.sieg_fin_workspaces TO anon, authenticated, service_role;
+GRANT SELECT ON public.sieg_fin_workspaces TO authenticated, service_role;

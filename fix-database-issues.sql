@@ -4,8 +4,8 @@ ALTER TABLE database_configs DISABLE ROW LEVEL SECURITY;
 -- 2. Popular tabela database_configs com as configurações dos bancos
 INSERT INTO database_configs (name, database_key, url, anon_key, active)
 VALUES 
-  ('ASF Finance', 'asf', 'https://wrebkgazdlyjenbpexnc.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndyZWJrZ2F6ZGx5amVuYnBleG5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1ODgzMTQsImV4cCI6MjA3NTE2NDMxNH0.P2miUZA3TX0ofUEhIdEkwGq-oruyDPiC1GjEcQkun7w', true),
-  ('SIEG Financeiro', 'sieg', 'https://vrbgptrmmvsaoozrplng.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyYmdwdHJtbXZzYW9venJwbG5nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA4MTQxNDgsImV4cCI6MjA3NjM5MDE0OH0.q7GPpHQxCG-V5J0BZlKZoPy57XJiQCqLCA1Ya72HxPI', true)
+  ('ASF Finance', 'asf', 'https://wrebkgazdlyjenbpexnc.supabase.co', '', true), -- Use variável de ambiente para anon_key
+  ('SIEG Financeiro', 'sieg', 'https://vrbgptrmmvsaoozrplng.supabase.co', '', true) -- Use variável de ambiente para anon_key
 ON CONFLICT (database_key) DO UPDATE SET
   name = EXCLUDED.name,
   url = EXCLUDED.url,
@@ -91,4 +91,4 @@ $$;
 
 -- Permitir que usuários autenticados executem a função
 GRANT EXECUTE ON FUNCTION get_atendimentos_metrics TO authenticated;
-GRANT EXECUTE ON FUNCTION get_atendimentos_metrics TO anon;
+-- Removido GRANT para anon por segurança

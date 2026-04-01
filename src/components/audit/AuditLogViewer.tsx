@@ -172,8 +172,8 @@ export function AuditLogViewer({ className }: AuditLogViewerProps) {
               <SelectContent>
                 <SelectItem value="all">Todas as tabelas</SelectItem>
                 <SelectItem value="leads">Leads</SelectItem>
-                <SelectItem value="conversas_leads">Conversas</SelectItem>
-                <SelectItem value="financeiro_sieg">Financeiro SIEG</SelectItem>
+                <SelectItem value="sieg_fin_conversas_leads">Conversas</SelectItem>
+                <SelectItem value="sieg_fin_financeiro">Financeiro SIEG</SelectItem>
                 <SelectItem value="campanhas">Campanhas</SelectItem>
                 <SelectItem value="tenant_users">Usuários</SelectItem>
                 <SelectItem value="mapeamentos_tags_tenant">Tags</SelectItem>

@@ -67,7 +67,7 @@ serve(async (req) => {
 
     // Check if the requesting user is owner or admin of the tenant
     const { data: requesterMembership, error: membershipError } = await supabaseClient
-      .from('tenant_users')
+      .from('sieg_fin_tenant_users')
       .select('role, active')
       .eq('tenant_id', tenantId)
       .eq('user_id', user.id)
@@ -148,7 +148,7 @@ serve(async (req) => {
 
     // Check if user is already a member
     const { data: existingMember } = await supabaseClient
-      .from('tenant_users')
+      .from('sieg_fin_tenant_users')
       .select('user_id, active')
       .eq('tenant_id', tenantId)
       .eq('user_id', userId)
@@ -162,7 +162,7 @@ serve(async (req) => {
 
     if (existingMember) {
       const { error } = await supabaseClient
-        .from('tenant_users')
+        .from('sieg_fin_tenant_users')
         .update({
           role,
           active: true,
@@ -176,7 +176,7 @@ serve(async (req) => {
       upsertError = error;
     } else {
       const { error } = await supabaseClient
-        .from('tenant_users')
+        .from('sieg_fin_tenant_users')
         .insert({
           tenant_id: tenantId,
           user_id: userId,

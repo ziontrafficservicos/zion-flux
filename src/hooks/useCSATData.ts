@@ -200,7 +200,7 @@ export function useCSATData(_workspaceId: string, startDate?: Date, endDate?: Da
 
         console.log('📅 DEBUG CSAT - Filtro:', { tenantId: tenant.id, startDate: filterStartDate, endDate: filterEndDate });
 
-        // Para SIEG Financeiro, buscar da tabela financeiro_sieg COM PAGINAÇÃO
+        // Para SIEG Financeiro, buscar da tabela sieg_fin_financeiro COM PAGINAÇÃO
         const PAGE_SIZE = 1000;
         let allRegistros: any[] = [];
         let fetchError: any = null;
@@ -242,7 +242,7 @@ export function useCSATData(_workspaceId: string, startDate?: Date, endDate?: Da
         
         const registros = allRegistros;
 
-        console.log('🔍 DEBUG CSAT - Dados brutos financeiro_sieg:', { totalRegistros: registros?.length || 0 });
+        console.log('🔍 DEBUG CSAT - Dados brutos sieg_fin_financeiro:', { totalRegistros: registros?.length || 0 });
         
         // DEBUG: Mostrar exemplos de registros com seus campos
         console.log('🔬 DEBUG CSAT - Exemplos de registros:', registros?.slice(0, 5).map(r => ({
@@ -313,9 +313,10 @@ export function useCSATData(_workspaceId: string, startDate?: Date, endDate?: Da
           // Obter nota do campo nota_csat (APENAS notas válidas 1-5)
           let nota: number | null = null;
           
-          // APENAS usar nota_csat se for válida (1-5)
-          if (registro.nota_csat >= 1 && registro.nota_csat <= 5) {
-            nota = registro.nota_csat;
+          // APENAS usar nota_csat se for válida (1-5) — converter para número pois o campo é TEXT no banco
+          const notaCsatNum = typeof registro.nota_csat === 'string' ? parseInt(registro.nota_csat, 10) : Number(registro.nota_csat);
+          if (!isNaN(notaCsatNum) && notaCsatNum >= 1 && notaCsatNum <= 5) {
+            nota = notaCsatNum;
           }
 
           // Se não tem nota válida, pular este registro

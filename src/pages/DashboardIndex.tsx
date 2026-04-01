@@ -22,7 +22,8 @@ import { ValoresPendentesCard } from "@/components/dashboard/ValoresPendentesCar
 import { useValoresFinanceiros } from "@/hooks/useValoresFinanceiros";
 import { DisparosDiariosChart } from "@/components/dashboard/DisparosDiariosChart";
 import logoZionIcon from "@/assets/logo-zion-icon.png";
-import { useTagCountsHistorico } from "@/hooks/useTagCountsHistorico";
+import { useTagCountsHistorico, type ContatoFinanceiro } from "@/hooks/useTagCountsHistorico";
+import { parseValorBR } from "@/lib/parseValorBR";
 import { APP_VERSION } from "@/lib/version";
 import { WhatsNewModal } from "@/components/updates/WhatsNewModal";
 
@@ -51,7 +52,10 @@ const DashboardIndex = () => {
   const valoresFinanceirosGerais = useValoresFinanceiros();
   
   // Hook para contagens históricas de tags (T1-T5) - SIEG Financeiro (com filtro de data)
-  const { counts: tagCountsHistorico } = useTagCountsHistorico(dateRange?.from, dateRange?.to);
+  const { counts: tagCountsHistorico, contatos: contatosFinanceiros } = useTagCountsHistorico(dateRange?.from, dateRange?.to);
+
+  // Tag selecionada para filtrar lista de contatos
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
   
   // Debug: Log workspace info
   useEffect(() => {
@@ -293,77 +297,109 @@ const DashboardIndex = () => {
           />
         </div>
 
-        {/* KPIs com cores iguais à tela de Atendimento */}
-        <div className={isSiegFinanceiro 
-          ? "grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4" 
-          : "grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4"
-        }>
-          {/* T1 - Vermelho claro */}
-          <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-2xl p-4 sm:p-5 border border-red-200 shadow-sm hover:shadow-md transition-all">
-            <p className="text-[10px] sm:text-xs font-semibold text-red-700 mb-1 uppercase tracking-wide">
-              {currentTenant?.slug === 'asf' ? 'T1 - NOVO LEAD' : 'T1 - SEM RESPOSTA'}
-            </p>
-            <p className="text-xl sm:text-2xl md:text-3xl font-bold text-red-700">
-              {isSiegFinanceiro 
-                ? tagCountsHistorico['T1 - SEM RESPOSTA'].toLocaleString('pt-BR')
-                : (leadsData.charts?.funnelData?.find(f => f.id === 'novo_lead')?.value || 0).toLocaleString('pt-BR')
-              }
-            </p>
-          </div>
+        {/* KPIs com cores iguais à tela de Atendimento — clicáveis */}
+        {(() => {
+          const tagCards = isSiegFinanceiro ? [
+            { key: 'T1 - SEM RESPOSTA', label: 'T1 - SEM RESPOSTA', value: tagCountsHistorico['T1 - SEM RESPOSTA'], colors: 'from-red-50 to-red-100 border-red-200', text: 'text-red-700', ring: 'ring-red-400' },
+            { key: 'T2 - RESPONDIDO', label: 'T2 - RESPONDIDO', value: tagCountsHistorico['T2 - RESPONDIDO'], colors: 'from-blue-50 to-blue-100 border-blue-200', text: 'text-blue-700', ring: 'ring-blue-400' },
+            { key: 'T3 - PAGO IA', label: 'T3 - PAGO IA', value: tagCountsHistorico['T3 - PAGO IA'], colors: 'from-emerald-50 to-emerald-100 border-emerald-200', text: 'text-emerald-700', ring: 'ring-emerald-400' },
+            { key: 'T3H - PAGO HUMANO', label: 'T3H - PAGO HUMANO', value: tagCountsHistorico['T3H - PAGO HUMANO'], colors: 'from-teal-50 to-teal-100 border-teal-200', text: 'text-teal-700', ring: 'ring-teal-400' },
+            { key: 'T4 - TRANSFERIDO', label: 'T4 - TRANSFERIDO', value: tagCountsHistorico['T4 - TRANSFERIDO'], colors: 'from-amber-50 to-amber-100 border-amber-200', text: 'text-amber-700', ring: 'ring-amber-400' },
+            { key: 'T5 - PASSÍVEL DE SUSPENSÃO', label: 'T5 - PASSÍVEL DE SUSPENSÃO', value: tagCountsHistorico['T5 - PASSÍVEL DE SUSPENSÃO'], colors: 'from-purple-50 to-purple-100 border-purple-200', text: 'text-purple-700', ring: 'ring-purple-400' },
+          ] : [
+            { key: 'T1', label: currentTenant?.slug === 'asf' ? 'T1 - NOVO LEAD' : 'T1 - SEM RESPOSTA', value: (leadsData.charts?.funnelData?.find(f => f.id === 'novo_lead')?.value || 0), colors: 'from-red-50 to-red-100 border-red-200', text: 'text-red-700', ring: 'ring-red-400' },
+            { key: 'T2', label: currentTenant?.slug === 'asf' ? 'T2 - QUALIFICANDO' : 'T2 - RESPONDIDO', value: (leadsData.charts?.funnelData?.find(f => f.id === 'qualificacao')?.value || 0), colors: 'from-blue-50 to-blue-100 border-blue-200', text: 'text-blue-700', ring: 'ring-blue-400' },
+            { key: 'T3', label: currentTenant?.slug === 'asf' ? 'T3 - QUALIFICADO' : 'T3 - PAGO IA', value: (leadsData.charts?.funnelData?.find(f => f.id === 'qualificados')?.value || 0), colors: 'from-emerald-50 to-emerald-100 border-emerald-200', text: 'text-emerald-700', ring: 'ring-emerald-400' },
+            { key: 'T4', label: currentTenant?.slug === 'asf' ? 'T5 - DESQUALIFICADO' : 'T4 - TRANSFERIDO', value: currentTenant?.slug === 'asf' ? (leadsData.charts?.funnelData?.find(f => f.id === 'descartados')?.value || 0) : (leadsData.charts?.funnelData?.find(f => f.id === 'followup')?.value || 0), colors: 'from-amber-50 to-amber-100 border-amber-200', text: 'text-amber-700', ring: 'ring-amber-400' },
+          ];
 
-          {/* T2 - Azul claro */}
-          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-4 sm:p-5 border border-blue-200 shadow-sm hover:shadow-md transition-all">
-            <p className="text-[10px] sm:text-xs font-semibold text-blue-700 mb-1 uppercase tracking-wide">
-              {currentTenant?.slug === 'asf' ? 'T2 - QUALIFICANDO' : 'T2 - RESPONDIDO'}
-            </p>
-            <p className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-700">
-              {isSiegFinanceiro 
-                ? tagCountsHistorico['T2 - RESPONDIDO'].toLocaleString('pt-BR')
-                : (leadsData.charts?.funnelData?.find(f => f.id === 'qualificacao')?.value || 0).toLocaleString('pt-BR')
-              }
-            </p>
-          </div>
-
-          {/* T3 - Verde claro */}
-          <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-2xl p-4 sm:p-5 border border-emerald-200 shadow-sm hover:shadow-md transition-all">
-            <p className="text-[10px] sm:text-xs font-semibold text-emerald-700 mb-1 uppercase tracking-wide">
-              {currentTenant?.slug === 'asf' ? 'T3 - QUALIFICADO' : 'T3 - PAGO IA'}
-            </p>
-            <p className="text-xl sm:text-2xl md:text-3xl font-bold text-emerald-700">
-              {isSiegFinanceiro 
-                ? tagCountsHistorico['T3 - PAGO IA'].toLocaleString('pt-BR')
-                : (leadsData.charts?.funnelData?.find(f => f.id === 'qualificados')?.value || 0).toLocaleString('pt-BR')
-              }
-            </p>
-          </div>
-
-          {/* T4 - Amarelo claro */}
-          <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-2xl p-4 sm:p-5 border border-amber-200 shadow-sm hover:shadow-md transition-all">
-            <p className="text-[10px] sm:text-xs font-semibold text-amber-700 mb-1 uppercase tracking-wide">
-              {currentTenant?.slug === 'asf' ? 'T5 - DESQUALIFICADO' : 'T4 - TRANSFERIDO'}
-            </p>
-            <p className="text-xl sm:text-2xl md:text-3xl font-bold text-amber-700">
-              {isSiegFinanceiro 
-                ? tagCountsHistorico['T4 - TRANSFERIDO'].toLocaleString('pt-BR')
-                : currentTenant?.slug === 'asf' 
-                  ? (leadsData.charts?.funnelData?.find(f => f.id === 'descartados')?.value || 0).toLocaleString('pt-BR')
-                  : (leadsData.charts?.funnelData?.find(f => f.id === 'followup')?.value || 0).toLocaleString('pt-BR')
-              }
-            </p>
-          </div>
-
-          {/* T5 - Roxo claro - APENAS PARA SIEG FINANCEIRO */}
-          {isSiegFinanceiro && (
-            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-4 sm:p-5 border border-purple-200 shadow-sm hover:shadow-md transition-all">
-              <p className="text-[10px] sm:text-xs font-semibold text-purple-700 mb-1 uppercase tracking-wide">
-                T5 - PASSÍVEL DE SUSPENSÃO
-              </p>
-              <p className="text-xl sm:text-2xl md:text-3xl font-bold text-purple-700">
-                {tagCountsHistorico['T5 - PASSÍVEL DE SUSPENSÃO'].toLocaleString('pt-BR')}
-              </p>
+          return (
+            <div className={`grid grid-cols-2 sm:grid-cols-3 ${isSiegFinanceiro ? 'lg:grid-cols-6' : 'md:grid-cols-4'} gap-3 sm:gap-4`}>
+              {tagCards.map((card) => (
+                <div
+                  key={card.key}
+                  onClick={() => isSiegFinanceiro && setSelectedTag(prev => prev === card.key ? null : card.key)}
+                  className={`bg-gradient-to-br ${card.colors} rounded-2xl p-4 sm:p-5 border shadow-sm hover:shadow-md transition-all ${
+                    isSiegFinanceiro ? 'cursor-pointer' : ''
+                  } ${selectedTag === card.key ? `ring-2 ring-offset-2 ${card.ring} scale-[1.03]` : ''}`}
+                >
+                  <p className={`text-[10px] sm:text-xs font-semibold ${card.text} mb-1 uppercase tracking-wide`}>
+                    {card.label}
+                  </p>
+                  <p className={`text-xl sm:text-2xl md:text-3xl font-bold ${card.text}`}>
+                    {card.value.toLocaleString('pt-BR')}
+                  </p>
+                </div>
+              ))}
             </div>
-          )}
-        </div>
+          );
+        })()}
+
+        {/* Lista de contatos filtrada por tag selecionada */}
+        {isSiegFinanceiro && selectedTag && (() => {
+          const classificarContato = (item: ContatoFinanceiro): string => {
+            const tagUpper = String(item.tag || '').toUpperCase();
+            const valorIA = parseValorBR(item.valor_recuperado_ia);
+            const valorHumano = parseValorBR(item.valor_recuperado_humano);
+            if (tagUpper.includes('T5') || tagUpper.includes('SUSPENS')) return 'T5 - PASSÍVEL DE SUSPENSÃO';
+            if (valorHumano > 0) return 'T3H - PAGO HUMANO';
+            if (valorIA > 0) return 'T3 - PAGO IA';
+            if (tagUpper.includes('T4') || tagUpper.includes('TRANSFERIDO')) return 'T4 - TRANSFERIDO';
+            if (tagUpper.includes('T3') || tagUpper.includes('PAGO')) return 'T3 - PAGO IA';
+            if (tagUpper.includes('T2') || tagUpper.includes('RESPONDIDO') || tagUpper.includes('QUALIFICANDO')) return 'T2 - RESPONDIDO';
+            return 'T1 - SEM RESPOSTA';
+          };
+
+          const filtrados = contatosFinanceiros.filter(c => classificarContato(c) === selectedTag);
+
+          return (
+            <div className="glass rounded-2xl p-6 border border-border/50 shadow-premium">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-foreground">
+                  Contatos — {selectedTag} ({filtrados.length})
+                </h3>
+                <button
+                  onClick={() => setSelectedTag(null)}
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Fechar
+                </button>
+              </div>
+              {filtrados.length === 0 ? (
+                <p className="text-muted-foreground text-sm">Nenhum contato encontrado para essa tag.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border/50">
+                        <th className="text-left py-3 px-2 font-semibold text-muted-foreground">Empresa</th>
+                        <th className="text-left py-3 px-2 font-semibold text-muted-foreground">Telefone</th>
+                        <th className="text-left py-3 px-2 font-semibold text-muted-foreground">CNPJ</th>
+                        <th className="text-right py-3 px-2 font-semibold text-muted-foreground">Valor em Aberto</th>
+                        <th className="text-right py-3 px-2 font-semibold text-muted-foreground">Recuperado IA</th>
+                        <th className="text-right py-3 px-2 font-semibold text-muted-foreground">Recuperado Humano</th>
+                        <th className="text-left py-3 px-2 font-semibold text-muted-foreground">Data Disparo</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filtrados.map((contato) => (
+                        <tr key={contato.id} className="border-b border-border/30 hover:bg-muted/30 transition-colors">
+                          <td className="py-3 px-2 font-medium">{contato.nome_empresa || contato.nome || '—'}</td>
+                          <td className="py-3 px-2">{contato.telefone}</td>
+                          <td className="py-3 px-2">{contato.cnpj || '—'}</td>
+                          <td className="py-3 px-2 text-right">R$ {parseValorBR(contato.valor_em_aberto).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                          <td className="py-3 px-2 text-right text-emerald-600">R$ {parseValorBR(contato.valor_recuperado_ia).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                          <td className="py-3 px-2 text-right text-teal-600">R$ {parseValorBR(contato.valor_recuperado_humano).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                          <td className="py-3 px-2">{contato.data_disparo || (contato.criado_em ? new Date(contato.criado_em).toLocaleDateString('pt-BR') : '—')}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Valores Pendentes e Recuperações - APENAS PARA SIEG FINANCEIRO */}
         {isSiegFinanceiro && (

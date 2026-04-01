@@ -1,7 +1,7 @@
 -- ============================================================
 -- RPCs de Integracao NicoChat → Supabase
 -- Projeto: Zion Flux (SIEG Financeiro)
--- Banco: zfgezrwksmuhnrmudnas
+-- Banco: iifiijbrzcjgukjeywuf
 -- Data: 2026-03-22
 -- ============================================================
 

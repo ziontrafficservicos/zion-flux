@@ -99,7 +99,7 @@ serve(async (req) => {
 
     // Verificar se o usuário tem permissão (owner ou admin)
     const { data: requesterMembership, error: membershipError } = await supabaseAdmin
-      .from('tenant_users')
+      .from('sieg_fin_tenant_users')
       .select('role, active')
       .eq('tenant_id', tenantId)
       .eq('user_id', user.id)
@@ -121,7 +121,7 @@ serve(async (req) => {
 
     // Buscar dados do tenant para exibir na interface
     const { data: tenantRecord, error: tenantError } = await supabaseAdmin
-      .from('tenants_new')
+      .from('sieg_fin_empresas')
       .select('id, name, slug')
       .eq('id', tenantId)
       .maybeSingle();
@@ -147,7 +147,7 @@ serve(async (req) => {
 
     // Criar convite pendente
     const { data: invite, error: insertError } = await supabaseAdmin
-      .from('pending_invites')
+      .from('sieg_fin_pending_invites')
       .insert({
         workspace_id: tenantId,
         email: email.toLowerCase().trim(),
