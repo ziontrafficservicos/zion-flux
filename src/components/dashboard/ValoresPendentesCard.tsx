@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { TrendingUp, TrendingDown, DollarSign, AlertTriangle, CheckCircle, Clock, User, Bot } from 'lucide-react';
+import { DollarSign, AlertTriangle, CheckCircle, User, Bot } from 'lucide-react';
 
 interface ValoresPendentesProps {
   valorPendente: number;
@@ -14,14 +13,11 @@ interface ValoresPendentesProps {
 export function ValoresPendentesCard({
   valorPendente = 0,
   valorRecuperado = 0,
-  valorEmNegociacao = 0,
   metaMensal = 0,
   isLoading = false,
   valorRecuperadoHumano = 0,
   valorRecuperadoIA = 0,
 }: ValoresPendentesProps) {
-  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
-
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -30,23 +26,28 @@ export function ValoresPendentesCard({
     }).format(value);
   };
 
-  const taxaRecuperacao = valorPendente > 0 
-    ? ((valorRecuperado / (valorPendente + valorRecuperado)) * 100).toFixed(1)
+  const totalCobrado = valorPendente + valorRecuperado;
+  const taxaRecuperacao = totalCobrado > 0
+    ? ((valorRecuperado / totalCobrado) * 100).toFixed(1)
+    : '0.0';
+
+  const progressoMeta = metaMensal > 0
+    ? Math.min((valorRecuperado / metaMensal) * 100, 100)
     : 0;
 
-  const progressoMeta = metaMensal > 0 
-    ? Math.min((valorRecuperado / metaMensal) * 100, 100).toFixed(1)
-    : 0;
+  // Proporção Humano vs IA para barra
+  const totalRec = valorRecuperadoHumano + valorRecuperadoIA;
+  const pctHumano = totalRec > 0 ? (valorRecuperadoHumano / totalRec) * 100 : 50;
+  const pctIA = totalRec > 0 ? (valorRecuperadoIA / totalRec) * 100 : 50;
 
   if (isLoading) {
     return (
-      <div className="rounded-3xl p-8 border border-gray-200 shadow-2xl bg-white">
-        <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-gray-200 rounded-xl w-1/3" />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-32 bg-gray-200 rounded-2xl" />
-            ))}
+      <div className="rounded-2xl p-6 border border-gray-200 bg-white">
+        <div className="animate-pulse space-y-4">
+          <div className="h-6 bg-gray-100 rounded w-1/3" />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="h-28 bg-gray-100 rounded-xl" />
+            <div className="h-28 bg-gray-100 rounded-xl" />
           </div>
         </div>
       </div>
@@ -54,102 +55,86 @@ export function ValoresPendentesCard({
   }
 
   return (
-    <div className="rounded-3xl p-8 border border-gray-200 shadow-2xl bg-white">
+    <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden">
       {/* Header */}
-      <div className="flex items-center gap-4 mb-8">
-        <div className="relative">
-          <div className="absolute inset-0 bg-green-500/30 blur-xl rounded-full animate-pulse" />
-          <div className="relative w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg">
-            <DollarSign className="w-6 h-6 text-white" />
-          </div>
+      <div className="flex items-center gap-3 px-6 pt-6 pb-4">
+        <div className="w-9 h-9 rounded-lg bg-gray-900 flex items-center justify-center">
+          <DollarSign className="w-5 h-5 text-white" />
         </div>
         <div>
-          <h3 className="text-2xl font-bold text-gray-800">Valores Financeiros</h3>
-          <p className="text-sm text-muted-foreground">Pendentes e Recuperados</p>
+          <h3 className="text-base font-semibold text-gray-900">Valores Financeiros</h3>
+          <p className="text-xs text-gray-500">Pendentes e Recuperados</p>
         </div>
       </div>
 
-      {/* Cards de Valores */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      {/* Cards principais */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 px-6 pb-4">
         {/* Valor Pendente */}
-        <div 
-          className={`relative overflow-hidden rounded-2xl p-6 border-2 transition-all duration-300 ${
-            hoveredCard === 'pendente' ? 'border-red-400 shadow-xl scale-105' : 'border-red-200'
-          } bg-gradient-to-br from-red-50 to-white`}
-          onMouseEnter={() => setHoveredCard('pendente')}
-          onMouseLeave={() => setHoveredCard(null)}
-        >
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow-lg">
-              <AlertTriangle className="w-6 h-6 text-white" />
-            </div>
-            <TrendingDown className="w-5 h-5 text-red-500" />
+        <div className="rounded-xl p-5 bg-red-50 border border-red-100">
+          <div className="flex items-center gap-2 mb-3">
+            <AlertTriangle className="w-4 h-4 text-red-500" />
+            <span className="text-xs font-medium text-red-600 uppercase tracking-wide">Pendente</span>
           </div>
-          <p className="text-xs text-red-600 uppercase font-semibold tracking-wider mb-1">Valor Pendente</p>
-          <p className="text-2xl font-bold text-red-700">{formatCurrency(valorPendente)}</p>
-          <p className="text-xs text-red-500 mt-2">Aguardando pagamento</p>
+          <p className="text-2xl font-bold text-gray-900">{formatCurrency(valorPendente)}</p>
+          <p className="text-xs text-gray-500 mt-1">Aguardando pagamento</p>
         </div>
 
         {/* Valor Recuperado */}
-        <div 
-          className={`relative overflow-hidden rounded-2xl p-6 border-2 transition-all duration-300 ${
-            hoveredCard === 'recuperado' ? 'border-emerald-400 shadow-xl scale-105' : 'border-emerald-200'
-          } bg-gradient-to-br from-emerald-50 to-white`}
-          onMouseEnter={() => setHoveredCard('recuperado')}
-          onMouseLeave={() => setHoveredCard(null)}
-        >
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg">
-              <CheckCircle className="w-6 h-6 text-white" />
+        <div className="rounded-xl p-5 bg-emerald-50 border border-emerald-100">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-emerald-500" />
+              <span className="text-xs font-medium text-emerald-600 uppercase tracking-wide">Recuperado</span>
             </div>
-            <TrendingUp className="w-5 h-5 text-emerald-500" />
+            <span className="text-xs font-medium text-emerald-600">{taxaRecuperacao}% do total</span>
           </div>
-          <p className="text-xs text-emerald-600 uppercase font-semibold tracking-wider mb-1">Valor Recuperado</p>
-          <p className="text-2xl font-bold text-emerald-700">{formatCurrency(valorRecuperado)}</p>
-          <p className="text-xs text-emerald-500 mt-2">Pagamentos recebidos</p>
+          <p className="text-2xl font-bold text-gray-900">{formatCurrency(valorRecuperado)}</p>
+
+          {/* Barra Humano vs IA */}
+          {totalRec > 0 && (
+            <div className="mt-3">
+              <div className="flex h-2 rounded-full overflow-hidden bg-gray-100">
+                <div
+                  className="bg-blue-400 transition-all duration-500"
+                  style={{ width: `${pctHumano}%` }}
+                />
+                <div
+                  className="bg-purple-400 transition-all duration-500"
+                  style={{ width: `${pctIA}%` }}
+                />
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Recuperação por Humano e IA */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Recuperado por Humano */}
-        <div 
-          className={`relative overflow-hidden rounded-2xl p-6 border-2 transition-all duration-300 ${
-            hoveredCard === 'humano' ? 'border-blue-400 shadow-xl scale-105' : 'border-blue-200'
-          } bg-gradient-to-br from-blue-50 to-white`}
-          onMouseEnter={() => setHoveredCard('humano')}
-          onMouseLeave={() => setHoveredCard(null)}
-        >
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
-              <User className="w-6 h-6 text-white" />
-            </div>
-            <TrendingUp className="w-5 h-5 text-blue-500" />
+      {/* Cards Pago Humano e Pago IA */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 px-6 pb-6">
+        {/* Pago Humano */}
+        <div className="rounded-xl p-4 bg-blue-50 border border-blue-100">
+          <div className="flex items-center gap-2 mb-2">
+            <User className="w-4 h-4 text-blue-500" />
+            <span className="text-xs font-medium text-blue-600 uppercase tracking-wide">Pago Humano</span>
           </div>
-          <p className="text-xs text-blue-600 uppercase font-semibold tracking-wider mb-1">Recuperado por Humano</p>
-          <p className="text-2xl font-bold text-blue-700">{formatCurrency(valorRecuperadoHumano)}</p>
-          <p className="text-xs text-blue-500 mt-2">Atendimento manual</p>
+          <p className="text-xl font-bold text-gray-900">{formatCurrency(valorRecuperadoHumano)}</p>
+          {totalRec > 0 && (
+            <p className="text-xs text-gray-500 mt-1">{pctHumano.toFixed(1)}% do recuperado</p>
+          )}
         </div>
 
-        {/* Recuperado por IA */}
-        <div 
-          className={`relative overflow-hidden rounded-2xl p-6 border-2 transition-all duration-300 ${
-            hoveredCard === 'ia' ? 'border-purple-400 shadow-xl scale-105' : 'border-purple-200'
-          } bg-gradient-to-br from-purple-50 to-white`}
-          onMouseEnter={() => setHoveredCard('ia')}
-          onMouseLeave={() => setHoveredCard(null)}
-        >
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-lg">
-              <Bot className="w-6 h-6 text-white" />
-            </div>
-            <TrendingUp className="w-5 h-5 text-purple-500" />
+        {/* Pago IA */}
+        <div className="rounded-xl p-4 bg-purple-50 border border-purple-100">
+          <div className="flex items-center gap-2 mb-2">
+            <Bot className="w-4 h-4 text-purple-500" />
+            <span className="text-xs font-medium text-purple-600 uppercase tracking-wide">Pago IA</span>
           </div>
-          <p className="text-xs text-purple-600 uppercase font-semibold tracking-wider mb-1">Recuperado por IA</p>
-          <p className="text-2xl font-bold text-purple-700">{formatCurrency(valorRecuperadoIA)}</p>
-          <p className="text-xs text-purple-500 mt-2">Atendimento automatizado</p>
+          <p className="text-xl font-bold text-gray-900">{formatCurrency(valorRecuperadoIA)}</p>
+          {totalRec > 0 && (
+            <p className="text-xs text-gray-500 mt-1">{pctIA.toFixed(1)}% do recuperado</p>
+          )}
         </div>
       </div>
+
     </div>
   );
 }
