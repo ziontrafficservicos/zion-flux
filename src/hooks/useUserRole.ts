@@ -30,8 +30,8 @@ export function useUserRole(): UseUserRoleReturn {
 
     const verifyMasterUser = async () => {
       try {
-        const { data } = await centralSupabase.auth.getUser();
-        const email = data.user?.email ?? null;
+        const { data: { session } } = await centralSupabase.auth.getSession();
+        const email = session?.user?.email ?? null;
         if (!isMounted) return;
         const masterEmails = [
           'george@ziontraffic.com.br',

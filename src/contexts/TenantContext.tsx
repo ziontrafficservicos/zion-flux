@@ -108,10 +108,11 @@ export const TenantProvider: React.FC<TenantProviderProps> = ({ children }) => {
       setIsLoading(true);
       setError(null);
 
-      const { data: authData, error: authError } = await centralSupabase.auth.getUser();
-      if (authError) throw authError;
+      // Usar getSession em vez de getUser para evitar erro "Invalid value" com tokens corrompidos
+      const { data: { session }, error: sessionError } = await centralSupabase.auth.getSession();
+      if (sessionError) throw sessionError;
 
-      const authUser = authData?.user;
+      const authUser = session?.user;
       if (!authUser) {
         setMemberships([]);
         setAvailableTenants([]);
@@ -184,6 +185,41 @@ export const TenantProvider: React.FC<TenantProviderProps> = ({ children }) => {
         normalizedMemberships = (rawMemberships || [])
           .map((item: any) => normalizeMembership(item))
           .filter((item): item is TenantMembership => Boolean(item));
+
+        // AUTO-ASSIGN: Se não tem nenhum tenant, associar ao SIEG automaticamente
+        if (normalizedMemberships.length === 0) {
+          const SIEG_TENANT_ID = 'a0000000-0000-0000-0000-000000000001';
+          console.log('🔄 Nenhum tenant encontrado — auto-associando ao SIEG...');
+
+          const { data: assigned, error: autoAssignError } = await centralSupabase
+            .rpc('sieg_fin_auto_assign_user', {
+              _user_id: authUser.id,
+              _tenant_id: SIEG_TENANT_ID,
+            });
+
+          if (!autoAssignError && assigned) {
+            console.log('✅ Auto-assign concluído! Recarregando memberships...');
+            // Recarregar memberships após auto-assign
+            const { data: newMemberships } = await (centralSupabase.from as any)('sieg_fin_tenant_users')
+              .select(`
+                id, tenant_id, user_id, role, active, custom_permissions,
+                tenant:sieg_fin_tenants_new (
+                  id, name, slug, database_key, domain, settings, branding,
+                  active, max_users, max_leads, plan_type, billing_email, created_at
+                )
+              `)
+              .eq('user_id', authUser.id)
+              .eq('active', true);
+
+            if (newMemberships && newMemberships.length > 0) {
+              normalizedMemberships = newMemberships
+                .map((item: any) => normalizeMembership(item))
+                .filter((item): item is TenantMembership => Boolean(item));
+            }
+          } else {
+            console.error('❌ Erro no auto-assign:', autoAssignError);
+          }
+        }
 
         tenantsList = normalizedMemberships
           .map((membership) => membership.tenant)

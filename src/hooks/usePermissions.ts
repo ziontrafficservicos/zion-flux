@@ -4,6 +4,7 @@ import { useTenant } from '@/contexts/TenantContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import { PERMISSIONS, PermissionKey, DEFAULT_PERMISSIONS_BY_ROLE } from '@/types/permissions';
 import { logger } from '@/utils/logger';
+import { supabase as centralSupabase } from '@/integrations/supabase/client';
 
 export interface UserPermission {
   permission_key: string;
@@ -24,8 +25,9 @@ export function usePermissions() {
   const workspaceSlug = currentTenant?.slug ?? currentDatabase;
 
   const fetchPermissions = async () => {
-    // Verificar se é master user
-    const { data: { user } } = await supabase.auth.getUser();
+    // Verificar se é master user (usar centralSupabase que sempre tem a sessão)
+    const { data: { session } } = await centralSupabase.auth.getSession();
+    const user = session?.user;
     const masterEmails = ['george@ziontraffic.com.br', 'leonardobasiliozion@gmail.com', 'eliasded51@gmail.com'];
     const isMasterUser = masterEmails.includes(user?.email || '');
     
@@ -60,19 +62,24 @@ export function usePermissions() {
     try {
       setLoading(true);
       
-      // Usar função RPC para buscar permissões (evita problemas de TypeScript)
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) {
-        setPermissions(new Set());
+      // Usar centralSupabase para auth (sempre tem sessão válida)
+      const { data: { session: currentSession } } = await centralSupabase.auth.getSession();
+      if (!currentSession?.user) {
+        console.log('⚠️ Sem sessão para buscar permissões, usando fallback');
+        if (role && DEFAULT_PERMISSIONS_BY_ROLE[role]) {
+          setPermissions(new Set(DEFAULT_PERMISSIONS_BY_ROLE[role]));
+        } else {
+          setPermissions(new Set(DEFAULT_PERMISSIONS_BY_ROLE.viewer));
+        }
         setLoading(false);
         return;
       }
 
       // Usar query SQL direta para evitar problemas de TypeScript
-      const { data: customPermissions, error } = await supabase
+      const { data: customPermissions, error } = await centralSupabase
         .rpc('sieg_fin_get_user_permissions', {
           p_workspace_id: tenantId,
-          p_user_id: userData.user.id
+          p_user_id: currentSession.user.id
         });
 
       if (error) {

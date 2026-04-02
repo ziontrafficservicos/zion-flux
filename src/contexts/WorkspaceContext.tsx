@@ -50,8 +50,16 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     async function initializeWorkspace() {
       try {
-        const { data: { user } } = await centralSupabase.auth.getUser();
-        
+        // Primeiro verificar se há sessão válida antes de chamar getUser
+        const { data: { session }, error: sessionError } = await centralSupabase.auth.getSession();
+
+        if (sessionError || !session) {
+          console.log('⚠️ Sem sessão válida:', sessionError?.message || 'no session');
+          setIsLoading(false);
+          return;
+        }
+
+        const user = session.user;
         if (!user) {
           setIsLoading(false);
           return;
@@ -151,7 +159,27 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
           setUserRole('member'); // Role padrão
           console.log('✅ Workspace encontrado:', targetWorkspaceId);
         } else {
-          console.log('❌ Nenhum workspace encontrado para o usuário');
+          // AUTO-ASSIGN: Associar automaticamente ao workspace SIEG Financeiro
+          // Usa RPC com SECURITY DEFINER para bypasear RLS
+          const SIEG_WORKSPACE_ID = 'a0000000-0000-0000-0000-000000000001';
+          console.log('🔄 Nenhum workspace encontrado — auto-associando ao SIEG Financeiro...');
+
+          const { data: assigned, error: autoAssignError } = await centralSupabase
+            .rpc('sieg_fin_auto_assign_user', {
+              _user_id: user.id,
+              _tenant_id: SIEG_WORKSPACE_ID,
+            });
+
+          if (!autoAssignError && assigned) {
+            targetWorkspaceId = SIEG_WORKSPACE_ID;
+            setUserRole('member');
+            console.log('✅ Auto-assign concluído! Workspace:', SIEG_WORKSPACE_ID);
+          } else {
+            console.error('❌ Erro no auto-assign:', autoAssignError);
+            // Fallback: tentar usar o workspace direto mesmo sem insert
+            targetWorkspaceId = SIEG_WORKSPACE_ID;
+            setUserRole('member');
+          }
         }
 
         // 3. Se encontrou workspace, validar acesso e carregar

@@ -22,8 +22,8 @@ export function AutoRedirect() {
   } = usePermissions();
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUserEmail(data.user?.email || null);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUserEmail(session?.user?.email || null);
     });
   }, []);
 
